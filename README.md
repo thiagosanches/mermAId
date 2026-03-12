@@ -1,0 +1,96 @@
+# mermAId
+
+An interactive project management tool that helps Project Managers build Gantt chart timelines with automatic working day calculations, dependency management, and visual timeline rendering.
+
+## Features
+
+- **Working Days Only**: Automatically calculates timelines using Monday-Friday only (weekends excluded)
+- **Activity-Based Planning**: Define activities by working days count - end dates are calculated automatically
+- **Smart Dependencies**: Activities can depend on each other, use custom start dates, or default to project start
+- **Weekend-Split Visualization**: Activity bars are visually split across weekends with gaps for Saturday/Sunday
+- **Color Coding**: Each activity has a customizable color with automatic text contrast for readability
+- **Weekend Highlighting**: Clear visual distinction of weekend columns (gray background)
+- **Clean Interface**: No dependency arrows - streamlined, uncluttered Gantt chart view
+- **Friday→Monday Logic**: When activities end on Friday, dependent tasks automatically start on Monday
+
+## Technology Stack
+
+- **Backend**: Node.js with Express
+- **Frontend**: Vanilla JavaScript with D3.js for interactive visualizations
+- **Date Handling**: Custom working day calculation engine
+
+## Installation
+
+```bash
+npm install
+```
+
+## Usage
+
+1. Start the server:
+```bash
+node server.js
+```
+
+2. Open your browser to `http://localhost:3000`
+
+3. Create your project:
+   - Set project name and start date
+   - Add activities with name, working days count, and color
+   - Define dependencies between activities or set custom start dates
+   - Click "Generate Gantt Chart" to visualize your timeline
+
+## How It Works
+
+### Working Days Calculation
+- Activities are defined by working days count (not end dates)
+- System automatically skips weekends when calculating dates
+- If an activity ends on Friday, dependent activities start on Monday
+- Each working day equals exactly one column width in the chart
+
+### Activity Dependencies
+- Activities can depend on previous activities (start after predecessor ends)
+- Activities without dependencies can use custom start dates
+- Activities default to project start date if no dependency or custom date is set
+
+### Visual Design
+- Activity bars split across weekends (e.g., Wed-Fri, gap, Mon-Tue)
+- Text color automatically adjusts for contrast (black on light, white on dark)
+- Weekend columns highlighted in gray
+- Color picker for each activity with random color generation
+
+## Project Structure
+
+```
+mermAId/
+├── server.js           # Express server (port 3000)
+├── package.json        # Node.js dependencies
+└── public/
+    ├── index.html      # Main UI with form inputs
+    ├── styles.css      # Styling with gradient theme
+    └── app.js          # Core application logic
+```
+
+## Key Functions
+
+### Date Calculations (`app.js`)
+- `isWeekend(date)` - Check if date is Saturday or Sunday
+- `calculateEndDate(start, workingDays)` - Compute end date excluding weekends
+- `getNextWorkingDay(date)` - Find next weekday after a date
+- `ensureWorkingDay(date)` - Move weekend dates to Monday
+- `getWeekdaySegments(start, end)` - Split activity into segments around weekends
+
+### Visualization (`app.js`)
+- `renderGanttChart()` - D3.js chart rendering with split bars
+- `getContrastColor(bgColor)` - Calculate readable text color using WCAG luminance formula
+- Activity bars rendered as separate segments with gaps for weekends
+
+## Requirements Fulfilled
+
+- ✅ Build simple timeline given name, start date and working days
+- ✅ Build timelines with different activities separated by color blocks
+- ✅ Automatic working day calculations (excludes weekends)
+- ✅ Dependency management between activities
+- ✅ Interactive D3.js visualization
+- ✅ Weekend-aware scheduling and visual representation
+

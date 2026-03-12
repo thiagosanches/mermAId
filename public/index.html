@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mermAId - Project Timeline Builder</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>mermAId - Project Timeline Builder</h1>
+            <p>Interactive Gantt chart timelines for your projects</p>
+        </header>
+
+        <div class="content">
+            <div class="form-section">
+                <h2>Project Details</h2>
+                
+                <div class="form-group">
+                    <label for="projectName">Project Name:</label>
+                    <input type="text" id="projectName" placeholder="My Project" value="My Project">
+                </div>
+
+                <div class="form-group">
+                    <label for="projectStart">Project Start Date:</label>
+                    <input type="date" id="projectStart">
+                </div>
+
+                <h3>Activities</h3>
+                <div id="activitiesContainer">
+                    <div class="activity-item" data-id="0">
+                        <input type="text" class="activity-name" placeholder="Activity Name" value="Refinement">
+                        <div class="form-group">
+                            <label>Working Days:</label>
+                            <input type="number" class="activity-workdays" placeholder="5" value="5" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Depends on:</label>
+                            <select class="activity-dependency" onchange="toggleStartDateField(this)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                        <div class="form-group custom-start-date">
+                            <label>Custom Start Date:</label>
+                            <input type="date" class="activity-custom-start">
+                        </div>
+                        <div class="color-picker-group">
+                            <label>Color:</label>
+                            <input type="color" class="activity-color" value="#667eea">
+                        </div>
+                        <button class="remove-activity" onclick="removeActivity(this)">Remove</button>
+                    </div>
+                </div>
+                
+                <button id="addActivity" class="btn btn-secondary">Add Activity</button>
+                <button id="generateTimeline" class="btn btn-primary">Generate Timeline</button>
+                
+                <div class="instructions">
+                    <h3>Instructions</h3>
+                    <ul>
+                        <li>Enter working days (excludes weekends)</li>
+                        <li>Set custom start date if no dependency</li>
+                        <li>Set dependencies to link activities</li>
+                        <li>Dependent tasks auto-start after previous</li>
+                        <li>Click Generate to create chart</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <h2>Timeline Preview</h2>
+                <div id="ganttChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
