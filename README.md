@@ -1,8 +1,8 @@
-<img width="1778" height="654" alt="image" src="https://github.com/user-attachments/assets/e753d16d-32d7-42ff-a23f-6e28bcabe7dc" /># mermAId
+# mermAId
 
 An interactive project management tool that helps Project Managers build Gantt chart timelines with automatic working day calculations, dependency management, and visual timeline rendering.
 
-<img width="1778" height="654" alt="image" src="https://github.com/user-attachments/assets/c56f1b5c-27e0-48d6-9c42-2acc0f1e4e31" />
+<img width="1778" height="654" alt="image" src="https://github.com/user-attachments/assets/e753d16d-32d7-42ff-a23f-6e28bcabe7dc" />
 
 ## Features
 
