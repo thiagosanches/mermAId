@@ -2,6 +2,10 @@
 
 An interactive project management tool that helps Project Managers build Gantt chart timelines with automatic working day calculations, dependency management, and visual timeline rendering.
 
+
+
+<img width="1822" height="680" alt="image" src="https://github.com/user-attachments/assets/af0e10a1-6b09-41bc-b398-fc6072a267c4" />
+
 ## Features
 
 - **Working Days Only**: Automatically calculates timelines using Monday-Friday only (weekends excluded)
