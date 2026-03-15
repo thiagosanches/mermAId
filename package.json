@@ -1,14 +1,13 @@
 {
-  "name": "mermaid-project-timeline",
+  "name": "ez-gantt",
   "version": "1.0.0",
-  "description": "A project management tool that helps Project Managers build timelines using Mermaid Gantt charts",
+  "description": "A project management tool that helps Project Managers build Gantt chart timelines with automatic working day calculations and dependency management",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "keywords": [
-    "mermaid",
     "gantt",
     "timeline",
     "project-management"

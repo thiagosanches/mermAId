@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mermAId - Project Timeline Builder</title>
+    <title>ez-gantt - Project Timeline Builder</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>mermAId - Project Timeline Builder</h1>
+            <h1>ez-gantt - Project Timeline Builder</h1>
             <p>Interactive Gantt chart timelines for your projects</p>
         </header>
 
@@ -56,6 +56,11 @@
                 
                 <button id="addActivity" class="btn btn-secondary">Add Activity</button>
                 <button id="generateTimeline" class="btn btn-primary">Generate Timeline</button>
+                <div class="project-actions">
+                    <button id="saveProject" class="btn btn-save">Save Project</button>
+                    <label for="loadProjectInput" class="btn btn-load">Load Project</label>
+                    <input type="file" id="loadProjectInput" accept=".json" style="display:none">
+                </div>
                 
                 <div class="instructions">
                     <h3>Instructions</h3>

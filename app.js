@@ -548,3 +548,120 @@ document.addEventListener('DOMContentLoaded', () => {
 window.removeActivity = removeActivity;
 window.updateDependencyDropdowns = updateDependencyDropdowns;
 window.toggleStartDateField = toggleStartDateField;
+
+// --- Save / Load ---
+
+function collectProjectData() {
+    const projectName = document.getElementById('projectName').value;
+    const projectStart = document.getElementById('projectStart').value;
+
+    const activities = [];
+    document.querySelectorAll('.activity-item').forEach(item => {
+        activities.push({
+            id: item.dataset.id,
+            name: item.querySelector('.activity-name').value,
+            workingDays: item.querySelector('.activity-workdays').value,
+            dependsOn: item.querySelector('.activity-dependency').value,
+            customStart: item.querySelector('.activity-custom-start').value,
+            color: item.querySelector('.activity-color').value,
+        });
+    });
+
+    return { projectName, projectStart, activities };
+}
+
+function saveProject() {
+    const data = collectProjectData();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${data.projectName || 'project'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function loadProject(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            restoreProjectData(data);
+        } catch {
+            alert('Invalid project file.');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function restoreProjectData(data) {
+    document.getElementById('projectName').value = data.projectName || '';
+    document.getElementById('projectStart').value = data.projectStart || '';
+
+    const container = document.getElementById('activitiesContainer');
+    container.innerHTML = '';
+    activityIdCounter = 0;
+
+    // First pass: create all activity items so dependency dropdowns can reference them
+    data.activities.forEach(act => {
+        const id = act.id ?? activityIdCounter;
+        if (Number(id) >= activityIdCounter) activityIdCounter = Number(id) + 1;
+
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.dataset.id = id;
+        item.innerHTML = `
+            <input type="text" class="activity-name" placeholder="Activity Name" value="${escapeHtml(act.name || '')}" onchange="updateDependencyDropdowns()">
+            <div class="form-group">
+                <label>Working Days:</label>
+                <input type="number" class="activity-workdays" placeholder="5" value="${Number(act.workingDays) || 5}" min="1">
+            </div>
+            <div class="form-group">
+                <label>Depends on:</label>
+                <select class="activity-dependency" onchange="toggleStartDateField(this)">
+                    <option value="">None</option>
+                </select>
+            </div>
+            <div class="form-group custom-start-date">
+                <label>Custom Start Date:</label>
+                <input type="date" class="activity-custom-start" value="${escapeHtml(act.customStart || '')}">
+            </div>
+            <div class="color-picker-group">
+                <label>Color:</label>
+                <input type="color" class="activity-color" value="${escapeHtml(act.color || '#667eea')}">
+            </div>
+            <button class="remove-activity" onclick="removeActivity(this)">Remove</button>
+        `;
+        container.appendChild(item);
+    });
+
+    // Second pass: rebuild dropdowns and restore dependency selections
+    updateDependencyDropdowns();
+    data.activities.forEach(act => {
+        const item = container.querySelector(`.activity-item[data-id="${act.id}"]`);
+        if (!item) return;
+        const select = item.querySelector('.activity-dependency');
+        if (act.dependsOn) select.value = act.dependsOn;
+        toggleStartDateField(select);
+    });
+
+    // Auto-generate the chart after restoring
+    document.getElementById('generateTimeline').click();
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+document.getElementById('saveProject').addEventListener('click', saveProject);
+document.getElementById('loadProjectInput').addEventListener('change', (e) => {
+    loadProject(e.target.files[0]);
+    e.target.value = ''; // reset so the same file can be loaded again
+});

@@ -1,4 +1,4 @@
-# mermAId
+# ez-gantt
 
 An interactive project management tool that helps Project Managers build Gantt chart timelines with automatic working day calculations, dependency management, and visual timeline rendering.
 
@@ -17,26 +17,14 @@ An interactive project management tool that helps Project Managers build Gantt c
 
 ## Technology Stack
 
-- **Backend**: Node.js with Express
 - **Frontend**: Vanilla JavaScript with D3.js for interactive visualizations
 - **Date Handling**: Custom working day calculation engine
 
-## Installation
-
-```bash
-npm install
-```
-
 ## Usage
 
-1. Start the server:
-```bash
-node server.js
-```
+1. Open `index.html` in your browser, or visit the [GitHub Pages site](https://thiago.github.io/ez-gantt)
 
-2. Open your browser to `http://localhost:3000`
-
-3. Create your project:
+2. Create your project:
    - Set project name and start date
    - Add activities with name, working days count, and color
    - Define dependencies between activities or set custom start dates
@@ -64,13 +52,10 @@ node server.js
 ## Project Structure
 
 ```
-mermAId/
-├── server.js           # Express server (port 3000)
-├── package.json        # Node.js dependencies
-└── public/
-    ├── index.html      # Main UI with form inputs
-    ├── styles.css      # Styling with gradient theme
-    └── app.js          # Core application logic
+ez-gantt/
+├── index.html          # Main UI with form inputs
+├── styles.css          # Styling with gradient theme
+└── app.js              # Core application logic
 ```
 
 ## Key Functions

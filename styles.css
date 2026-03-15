@@ -267,3 +267,37 @@ select:focus {
     color: #999;
     padding: 40px;
 }
+
+.project-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.project-actions .btn {
+    flex: 1;
+    text-align: center;
+}
+
+.btn-save {
+    background: #28a745;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.btn-load {
+    background: #17a2b8;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-load:hover {
+    background: #138496;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+}
