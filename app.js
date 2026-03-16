@@ -223,10 +223,10 @@ function initFteHints() {
 // ---------------------------------------------------------------------------
 function getRandomColor() {
     const colors = [
-        '#667eea', '#764ba2', '#f093fb', '#4facfe',
-        '#43e97b', '#fa709a', '#fee140', '#30cfd0',
-        '#a8edea', '#ff6b6b', '#4ecdc4', '#45b7d1',
-        '#96ceb4', '#ffeaa7', '#dfe6e9', '#74b9ff'
+        '#4F46E5', '#7C3AED', '#0EA5E9', '#10B981',
+        '#F59E0B', '#EF4444', '#EC4899', '#14B8A6',
+        '#6366F1', '#8B5CF6', '#06B6D4', '#22C55E',
+        '#F97316', '#64748B', '#0284C7', '#D946EF'
     ];
     return colors[Math.floor(Math.random() * colors.length)];
 }
@@ -779,7 +779,7 @@ function restoreProjectData(data) {
         item.innerHTML = `
             <div class="activity-header-row">
                 <input type="text" class="activity-name" placeholder="Activity Name" value="${escapeHtml(act.name || '')}" onchange="updateDependencyDropdowns()">
-                <input type="color" class="activity-color activity-color-swatch" value="${escapeHtml(act.color || '#667eea')}" title="Color">
+                <input type="color" class="activity-color activity-color-swatch" value="${escapeHtml(act.color || '#4F46E5')}" title="Color">
                 <button class="remove-activity" onclick="removeActivity(this)" title="Remove">✕</button>
             </div>
             <div class="activity-fields">
