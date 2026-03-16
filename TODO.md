@@ -1,10 +1,6 @@
 # TODO
 
-- Custom non-working days (like holidays).
-- Add a feature that handles the FTE.
-- Dark mode.
-- Add an option to export the chart as PNG.
-- UI/design/look n' feel tweaks.
-- Make it better how we input the dates and activities.
-
+- Dark mode: we still need to revisit this topic, it's good but the colors are not matching or blending with a good look n' feel, maybe we can get some reference from good websites out there.
+- The header: maybe we can let the title of the project with a better look n' feel from a professional perspective.
+- The buttons, they are still using different text presentation, like: 'MY BUTTON' and 'My button', we need to keep consistency.
 
