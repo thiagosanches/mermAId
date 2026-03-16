@@ -1,160 +1,229 @@
 // Global state
 let activityIdCounter = 1;
 let ganttChart = null;
+let holidays = []; // [{ date: 'YYYY-MM-DD', label: 'Holiday name' }]
+let hideWeekends = false;
 
-// Initialize with today's date
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('projectStart').value = today;
     updateDependencyDropdowns();
+    initDarkMode();
+    initFteHints();
+
+    document.getElementById('hideWeekends').addEventListener('change', (e) => {
+        hideWeekends = e.target.checked;
+        // Re-render if a chart already exists
+        if (ganttChart) document.getElementById('generateTimeline').click();
+    });
 });
 
-// Helper function to check if a date is a weekend
+// ---------------------------------------------------------------------------
+// Dark mode
+// ---------------------------------------------------------------------------
+function initDarkMode() {
+    const saved = localStorage.getItem('ez-gantt-dark');
+    if (saved === 'true') document.body.classList.add('dark');
+    updateDarkModeIcon();
+}
+
+function updateDarkModeIcon() {
+    const btn = document.getElementById('darkModeToggle');
+    btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+}
+
+document.getElementById('darkModeToggle').addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('ez-gantt-dark', document.body.classList.contains('dark'));
+    updateDarkModeIcon();
+});
+
+// ---------------------------------------------------------------------------
+// Holidays
+// ---------------------------------------------------------------------------
+function isHoliday(dateString) {
+    return holidays.some(h => h.date === dateString);
+}
+
+function formatDateDisplay(dateString) {
+    const [y, m, d] = dateString.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+function renderHolidaysList() {
+    const container = document.getElementById('holidaysList');
+    container.innerHTML = '';
+    if (holidays.length === 0) {
+        container.innerHTML = '<span class="holidays-empty">No holidays added.</span>';
+        return;
+    }
+    holidays.forEach((h, i) => {
+        const tag = document.createElement('span');
+        tag.className = 'holiday-tag';
+        tag.innerHTML = `${formatDateDisplay(h.date)}${h.label ? ' – ' + escapeHtml(h.label) : ''}
+            <button onclick="removeHoliday(${i})" title="Remove">×</button>`;
+        container.appendChild(tag);
+    });
+}
+
+function removeHoliday(index) {
+    holidays.splice(index, 1);
+    renderHolidaysList();
+}
+
+document.getElementById('addHoliday').addEventListener('click', () => {
+    const dateInput = document.getElementById('holidayDate');
+    const labelInput = document.getElementById('holidayLabel');
+    const date = dateInput.value;
+    if (!date) { alert('Please select a date for the holiday.'); return; }
+    if (holidays.some(h => h.date === date)) { alert('This date is already added.'); return; }
+    holidays.push({ date, label: labelInput.value.trim() });
+    holidays.sort((a, b) => a.date.localeCompare(b.date));
+    dateInput.value = '';
+    labelInput.value = '';
+    renderHolidaysList();
+});
+
+document.getElementById('exportHolidays').addEventListener('click', () => {
+    const json = JSON.stringify(holidays, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'holidays.json';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+document.getElementById('importHolidaysInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const imported = JSON.parse(ev.target.result);
+            if (!Array.isArray(imported)) throw new Error();
+            imported.forEach(h => {
+                if (h.date && !holidays.some(existing => existing.date === h.date)) {
+                    holidays.push({ date: h.date, label: h.label || '' });
+                }
+            });
+            holidays.sort((a, b) => a.date.localeCompare(b.date));
+            renderHolidaysList();
+        } catch {
+            alert('Invalid holidays file. Expected a JSON array.');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
+
+// ---------------------------------------------------------------------------
+// Date helpers
+// ---------------------------------------------------------------------------
 function isWeekend(date) {
     const day = date.getDay();
-    return day === 0 || day === 6; // 0 = Sunday, 6 = Saturday
+    return day === 0 || day === 6;
 }
 
-// Calculate end date from start date and working days (excluding weekends)
+function dateToString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function parseDate(dateString) {
+    const [y, m, d] = dateString.split('-');
+    return new Date(y, m - 1, d, 12, 0, 0);
+}
+
+function isNonWorking(date) {
+    return isWeekend(date) || isHoliday(dateToString(date));
+}
+
 function calculateEndDate(startDateString, workingDays) {
-    // Parse the date string and create a date at noon to avoid timezone issues
-    const parts = startDateString.split('-');
-    const date = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+    const date = parseDate(startDateString);
     let daysAdded = 0;
-    
-    // Count the start date as the first working day if it's a weekday
-    if (!isWeekend(date)) {
-        daysAdded = 1;
-    }
-    
-    // Add remaining working days
+    if (!isNonWorking(date)) daysAdded = 1;
     while (daysAdded < workingDays) {
         date.setDate(date.getDate() + 1);
-        if (!isWeekend(date)) {
-            daysAdded++;
-        }
+        if (!isNonWorking(date)) daysAdded++;
     }
-    
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return dateToString(date);
 }
 
-// Calculate the next working day after a given date
 function getNextWorkingDay(dateString) {
-    // Parse the date string and create a date at noon to avoid timezone issues
-    const parts = dateString.split('-');
-    const nextDay = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
-    nextDay.setDate(nextDay.getDate() + 1);
-    
-    while (isWeekend(nextDay)) {
-        nextDay.setDate(nextDay.getDate() + 1);
-    }
-    
-    const year = nextDay.getFullYear();
-    const month = String(nextDay.getMonth() + 1).padStart(2, '0');
-    const day = String(nextDay.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const next = parseDate(dateString);
+    next.setDate(next.getDate() + 1);
+    while (isNonWorking(next)) next.setDate(next.getDate() + 1);
+    return dateToString(next);
 }
 
-// Ensure a date is a working day (if weekend, move to next Monday)
 function ensureWorkingDay(dateString) {
-    // Parse the date string and create a date at noon to avoid timezone issues
-    const parts = dateString.split('-');
-    const date = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
-    
-    while (isWeekend(date)) {
-        date.setDate(date.getDate() + 1);
-    }
-    
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const date = parseDate(dateString);
+    while (isNonWorking(date)) date.setDate(date.getDate() + 1);
+    return dateToString(date);
 }
 
-// Calculate working days between two dates (excluding weekends)
-function calculateWorkingDays(startDate, endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    let workingDays = 0;
-    
-    const current = new Date(start);
-    while (current <= end) {
-        if (!isWeekend(current)) {
-            workingDays++;
-        }
-        current.setDate(current.getDate() + 1);
-    }
-    
-    return workingDays;
-}
-
-// Get weekday segments for an activity (split by weekends)
+// Get weekday (non-holiday) segments for an activity bar
 function getWeekdaySegments(startDateString, endDateString) {
     const segments = [];
-    const parts = startDateString.split('-');
-    const currentDate = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
-    const parts2 = endDateString.split('-');
-    const endDate = new Date(parts2[0], parts2[1] - 1, parts2[2], 12, 0, 0);
-    
+    const currentDate = parseDate(startDateString);
+    const endDate = parseDate(endDateString);
     let segmentStart = null;
-    
+
     while (currentDate <= endDate) {
-        const isWeekday = !isWeekend(currentDate);
-        
-        if (isWeekday) {
-            if (segmentStart === null) {
-                // Start a new segment
-                segmentStart = new Date(currentDate);
-            }
+        const working = !isNonWorking(currentDate);
+        if (working) {
+            if (segmentStart === null) segmentStart = new Date(currentDate);
         } else {
             if (segmentStart !== null) {
-                // End the current segment
-                const segmentEnd = new Date(currentDate);
-                segmentEnd.setDate(segmentEnd.getDate() - 1);
-                
-                const year = segmentStart.getFullYear();
-                const month = String(segmentStart.getMonth() + 1).padStart(2, '0');
-                const day = String(segmentStart.getDate()).padStart(2, '0');
-                const startStr = `${year}-${month}-${day}`;
-                
-                const year2 = segmentEnd.getFullYear();
-                const month2 = String(segmentEnd.getMonth() + 1).padStart(2, '0');
-                const day2 = String(segmentEnd.getDate()).padStart(2, '0');
-                const endStr = `${year2}-${month2}-${day2}`;
-                
-                segments.push({ start: startStr, end: endStr });
+                const segEnd = new Date(currentDate);
+                segEnd.setDate(segEnd.getDate() - 1);
+                segments.push({ start: dateToString(segmentStart), end: dateToString(segEnd) });
                 segmentStart = null;
             }
         }
-        
         currentDate.setDate(currentDate.getDate() + 1);
     }
-    
-    // Close any remaining segment
     if (segmentStart !== null) {
-        const year = segmentStart.getFullYear();
-        const month = String(segmentStart.getMonth() + 1).padStart(2, '0');
-        const day = String(segmentStart.getDate()).padStart(2, '0');
-        const startStr = `${year}-${month}-${day}`;
-        
-        const year2 = endDate.getFullYear();
-        const month2 = String(endDate.getMonth() + 1).padStart(2, '0');
-        const day2 = String(endDate.getDate()).padStart(2, '0');
-        const endStr = `${year2}-${month2}-${day2}`;
-        
-        segments.push({ start: startStr, end: endStr });
+        segments.push({ start: dateToString(segmentStart), end: endDateString });
     }
-    
     return segments;
 }
 
-// Generate random color
+// ---------------------------------------------------------------------------
+// FTE helpers
+// ---------------------------------------------------------------------------
+function calendarDaysFromFte(workingDays, fte) {
+    const effectiveFte = Math.max(0.1, parseFloat(fte) || 1);
+    return Math.ceil(workingDays / effectiveFte);
+}
+
+function updateFteHint(activityItem) {
+    const wd = parseInt(activityItem.querySelector('.activity-workdays').value) || 5;
+    const fte = parseFloat(activityItem.querySelector('.activity-fte').value) || 1;
+    const cal = calendarDaysFromFte(wd, fte);
+    const hint = activityItem.querySelector('.fte-hint');
+    if (hint) hint.textContent = `= ${cal} calendar day${cal !== 1 ? 's' : ''}`;
+}
+
+function initFteHints() {
+    document.querySelectorAll('.activity-item').forEach(item => {
+        updateFteHint(item);
+        item.querySelector('.activity-workdays').addEventListener('input', () => updateFteHint(item));
+        item.querySelector('.activity-fte').addEventListener('input', () => updateFteHint(item));
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 function getRandomColor() {
     const colors = [
-        '#667eea', '#764ba2', '#f093fb', '#4facfe', 
+        '#667eea', '#764ba2', '#f093fb', '#4facfe',
         '#43e97b', '#fa709a', '#fee140', '#30cfd0',
         '#a8edea', '#ff6b6b', '#4ecdc4', '#45b7d1',
         '#96ceb4', '#ffeaa7', '#dfe6e9', '#74b9ff'
@@ -162,64 +231,62 @@ function getRandomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-// Calculate text color based on background color brightness
 function getContrastColor(hexColor) {
-    // Convert hex to RGB
     const r = parseInt(hexColor.substr(1, 2), 16);
     const g = parseInt(hexColor.substr(3, 2), 16);
     const b = parseInt(hexColor.substr(5, 2), 16);
-    
-    // Calculate relative luminance using the formula from WCAG
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
-    // Return black for light backgrounds, white for dark backgrounds
     return luminance > 0.5 ? '#000000' : '#ffffff';
 }
 
-// Update dependency dropdowns
+// ---------------------------------------------------------------------------
+// Dependency dropdowns
+// ---------------------------------------------------------------------------
 function updateDependencyDropdowns() {
     const activityItems = document.querySelectorAll('.activity-item');
-    
     activityItems.forEach(item => {
         const currentId = item.dataset.id;
         const select = item.querySelector('.activity-dependency');
         const currentValue = select.value;
-        
-        // Clear and rebuild options
         select.innerHTML = '<option value="">None</option>';
-        
-        activityItems.forEach(otherItem => {
-            const otherId = otherItem.dataset.id;
-            if (otherId !== currentId) {
-                const otherName = otherItem.querySelector('.activity-name').value || `Activity ${otherId}`;
-                const option = document.createElement('option');
-                option.value = otherId;
-                option.textContent = otherName;
-                select.appendChild(option);
+        activityItems.forEach(other => {
+            if (other.dataset.id !== currentId) {
+                const name = other.querySelector('.activity-name').value || `Activity ${other.dataset.id}`;
+                const opt = document.createElement('option');
+                opt.value = other.dataset.id;
+                opt.textContent = name;
+                select.appendChild(opt);
             }
         });
-        
-        // Restore previous selection if still valid
-        if (currentValue) {
-            select.value = currentValue;
-        }
+        if (currentValue) select.value = currentValue;
     });
 }
 
-// Add activity button
+// ---------------------------------------------------------------------------
+// Add / Remove activities
+// ---------------------------------------------------------------------------
 document.getElementById('addActivity').addEventListener('click', () => {
     const container = document.getElementById('activitiesContainer');
-    const activityItem = document.createElement('div');
-    activityItem.className = 'activity-item';
-    activityItem.dataset.id = activityIdCounter++;
-    
-    const randomColor = getRandomColor();
-    
-    activityItem.innerHTML = `
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    item.dataset.id = activityIdCounter++;
+    const color = getRandomColor();
+
+    item.innerHTML = `
         <input type="text" class="activity-name" placeholder="Activity Name" onchange="updateDependencyDropdowns()">
-        <div class="form-group">
-            <label>Working Days:</label>
-            <input type="number" class="activity-workdays" placeholder="5" value="5" min="1">
+        <div class="activity-fields">
+            <div class="form-group">
+                <label>Working Days:</label>
+                <input type="number" class="activity-workdays" placeholder="5" value="5" min="1">
+            </div>
+            <div class="form-group">
+                <label>FTE:</label>
+                <input type="number" class="activity-fte" placeholder="1" value="1" min="0.1" step="0.1">
+            </div>
+            <div class="form-group fte-hint-group">
+                <label>&nbsp;</label>
+                <span class="fte-hint">= 5 calendar days</span>
+            </div>
         </div>
         <div class="form-group">
             <label>Depends on:</label>
@@ -233,324 +300,418 @@ document.getElementById('addActivity').addEventListener('click', () => {
         </div>
         <div class="color-picker-group">
             <label>Color:</label>
-            <input type="color" class="activity-color" value="${randomColor}">
+            <input type="color" class="activity-color" value="${color}">
         </div>
         <button class="remove-activity" onclick="removeActivity(this)">Remove</button>
     `;
-    
-    container.appendChild(activityItem);
+
+    container.appendChild(item);
     updateDependencyDropdowns();
-    
-    // Show custom start date field by default (no dependency)
-    const customStartDiv = activityItem.querySelector('.custom-start-date');
+
+    const customStartDiv = item.querySelector('.custom-start-date');
     customStartDiv.style.display = 'block';
+
+    // FTE hints
+    item.querySelector('.activity-workdays').addEventListener('input', () => updateFteHint(item));
+    item.querySelector('.activity-fte').addEventListener('input', () => updateFteHint(item));
+    updateFteHint(item);
 });
 
-// Remove activity function
 function removeActivity(button) {
-    const activityItem = button.closest('.activity-item');
-    activityItem.remove();
+    button.closest('.activity-item').remove();
     updateDependencyDropdowns();
 }
 
-// Calculate dates based on dependencies and working days
+// ---------------------------------------------------------------------------
+// Date calculations
+// ---------------------------------------------------------------------------
 function calculateActivityDates(activities, projectStart) {
     const activityMap = new Map();
     activities.forEach(act => activityMap.set(act.id, act));
-    
-    // Calculate dates for each activity
+
     activities.forEach(activity => {
         if (activity.dependsOn) {
-            const dependency = activityMap.get(activity.dependsOn);
-            if (dependency) {
-                // Start this activity the next working day after the dependency ends
-                activity.start = getNextWorkingDay(dependency.end);
-            }
+            const dep = activityMap.get(activity.dependsOn);
+            if (dep) activity.start = getNextWorkingDay(dep.end);
         } else {
-            // If no dependency, use custom start date or fall back to project start date
-            // Make sure the start date is a working day (not weekend)
             const startDate = activity.customStart || projectStart;
             activity.start = ensureWorkingDay(startDate);
         }
-        
-        // Calculate end date based on working days
-        activity.end = calculateEndDate(activity.start, activity.workingDays);
+        // Use calendar days derived from FTE
+        activity.end = calculateEndDate(activity.start, activity.calendarDays);
     });
-    
+
     return activities;
 }
 
-// Calculate project end date based on all activities
 function calculateProjectEndDate(activities) {
     if (activities.length === 0) return null;
-    
-    let maxEndDate = new Date(activities[0].end);
-    activities.forEach(activity => {
-        const endDate = new Date(activity.end);
-        if (endDate > maxEndDate) {
-            maxEndDate = endDate;
-        }
+    let max = new Date(activities[0].end);
+    activities.forEach(a => {
+        const d = new Date(a.end);
+        if (d > max) max = d;
     });
-    
-    // Add a week buffer for visualization
-    maxEndDate.setDate(maxEndDate.getDate() + 7);
-    return maxEndDate.toISOString().split('T')[0];
+    max.setDate(max.getDate() + 7);
+    return dateToString(max);
 }
 
-// Generate timeline button
+// ---------------------------------------------------------------------------
+// Generate timeline
+// ---------------------------------------------------------------------------
 document.getElementById('generateTimeline').addEventListener('click', () => {
     const projectName = document.getElementById('projectName').value;
     const projectStart = document.getElementById('projectStart').value;
-    
+
     if (!projectName || !projectStart) {
         alert('Please fill in project name and start date');
         return;
     }
-    
-    // Collect activities
+
     const activities = [];
-    const activityItems = document.querySelectorAll('.activity-item');
-    
-    activityItems.forEach((item) => {
+    document.querySelectorAll('.activity-item').forEach(item => {
         const name = item.querySelector('.activity-name').value;
         const workingDays = parseInt(item.querySelector('.activity-workdays').value) || 5;
+        const fte = parseFloat(item.querySelector('.activity-fte').value) || 1;
         const color = item.querySelector('.activity-color').value;
         const dependsOn = item.querySelector('.activity-dependency').value;
         const customStart = item.querySelector('.activity-custom-start').value;
         const id = item.dataset.id;
-        
+        const calendarDays = calendarDaysFromFte(workingDays, fte);
+
         if (name && workingDays > 0) {
-            activities.push({ 
-                id, 
-                name, 
-                workingDays,
-                color, 
-                dependsOn: dependsOn || null,
-                customStart: customStart || null,
-                start: null,
-                end: null
-            });
+            activities.push({ id, name, workingDays, fte, calendarDays, color, dependsOn: dependsOn || null, customStart: customStart || null, start: null, end: null });
         }
     });
-    
+
     if (activities.length === 0) {
         alert('Please add at least one activity with a name and working days');
         return;
     }
-    
-    // Calculate dates for all activities
-    const updatedActivities = calculateActivityDates(activities, projectStart);
-    
-    // Calculate project end date
-    const projectEnd = calculateProjectEndDate(updatedActivities);
-    
-    // Render chart
-    renderGanttChart(projectName, projectStart, projectEnd, updatedActivities);
+
+    const updated = calculateActivityDates(activities, projectStart);
+    const projectEnd = calculateProjectEndDate(updated);
+    renderGanttChart(projectName, projectStart, projectEnd, updated);
+
+    document.getElementById('exportPng').style.display = 'inline-block';
 });
 
-// D3.js Gantt Chart Rendering
+// ---------------------------------------------------------------------------
+// D3 chart
+// ---------------------------------------------------------------------------
 function renderGanttChart(projectName, projectStart, projectEnd, activities) {
     const container = document.getElementById('ganttChart');
     container.innerHTML = '';
-    
-    // Set up dimensions
+
+    const isDark = document.body.classList.contains('dark');
+
+    // Read weekend/holiday colors from CSS variables so dark mode is respected
+    const style = getComputedStyle(document.documentElement);
+    const weekendFill   = style.getPropertyValue('--weekend-bg').trim()  || '#e8e8e8';
+    const weekendText   = style.getPropertyValue('--weekend-text').trim() || '#aaaaaa';
+    const holidayFill   = style.getPropertyValue('--holiday-bg').trim()  || '#ffcccc';
+    const textPrimary   = style.getPropertyValue('--text-primary').trim() || '#333333';
+    const axisText      = style.getPropertyValue('--axis-text').trim()    || '#666666';
+    const gridLine      = style.getPropertyValue('--grid-line').trim()    || '#e9ecef';
+    const axisStroke    = style.getPropertyValue('--axis-stroke').trim()  || '#999999';
+
     const margin = { top: 60, right: 40, bottom: 60, left: 200 };
-    const width = container.clientWidth - margin.left - margin.right;
+    const totalWidth = container.clientWidth - margin.left - margin.right;
     const height = Math.max(400, activities.length * 60 + 100);
-    
-    // Create SVG
+
+    // Build the ordered list of days in the project range, optionally skipping weekends
+    const d3ParseDate = d3.timeParse('%Y-%m-%d');
+    const minDate = d3ParseDate(projectStart);
+    const maxDate = d3ParseDate(projectEnd);
+    const allDays = d3.timeDay.range(minDate, maxDate);
+
+    // When hiding weekends we build a band scale over working days only
+    let xScale;
+    let workingDays; // used only in hideWeekends mode
+    if (hideWeekends) {
+        workingDays = allDays.filter(d => !isWeekend(d) && !isHoliday(dateToString(d)));
+        const dayWidth = totalWidth / workingDays.length;
+        // Map each working-day date → its pixel x position
+        const dayIndex = new Map(workingDays.map((d, i) => [dateToString(d), i * dayWidth]));
+        // xScale accepts a Date and returns the pixel x of that day
+        xScale = (date) => {
+            const ds = dateToString(date);
+            if (dayIndex.has(ds)) return dayIndex.get(ds);
+            // For end-of-bar dates find the next working day's position + dayWidth
+            let d = new Date(date);
+            for (let i = 0; i < 10; i++) {
+                d.setDate(d.getDate() + 1);
+                const s = dateToString(d);
+                if (dayIndex.has(s)) return dayIndex.get(s);
+            }
+            return totalWidth;
+        };
+        xScale.dayWidth = dayWidth;
+        xScale.isCustom = true;
+    } else {
+        xScale = d3.scaleTime().domain([minDate, maxDate]).range([0, totalWidth]);
+        xScale.isCustom = false;
+    }
+
+    const width = totalWidth;
+
     const svg = d3.select('#ganttChart')
         .append('svg')
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    // Parse dates
-    const parseDate = d3.timeParse('%Y-%m-%d');
-    const formatDate = d3.timeFormat('%Y-%m-%d');
-    
-    const minDate = parseDate(projectStart);
-    const maxDate = parseDate(projectEnd);
-    
-    // Scales
-    const xScale = d3.scaleTime()
-        .domain([minDate, maxDate])
-        .range([0, width]);
-    
+
     const yScale = d3.scaleBand()
-        .domain(activities.map((d, i) => i))
+        .domain(activities.map((_, i) => i))
         .range([0, activities.length * 60])
         .padding(0.2);
-    
-    // Add title
+
+    // Title
     svg.append('text')
-        .attr('x', width / 2)
-        .attr('y', -30)
+        .attr('x', width / 2).attr('y', -30)
         .attr('text-anchor', 'middle')
-        .style('font-size', '20px')
-        .style('font-weight', 'bold')
+        .style('font-size', '20px').style('font-weight', 'bold')
+        .style('fill', textPrimary)
         .text(projectName);
-    
-    // Add grid lines for weekdays
-    const xAxis = d3.axisBottom(xScale)
-        .ticks(d3.timeWeek.every(1))
-        .tickFormat(d3.timeFormat('%m/%d'));
-    
-    const xAxisGrid = d3.axisBottom(xScale)
-        .ticks(d3.timeDay.every(1))
-        .tickSize(-activities.length * 60)
-        .tickFormat('');
-    
-    svg.append('g')
-        .attr('class', 'grid')
-        .attr('transform', `translate(0,${activities.length * 60})`)
-        .call(xAxisGrid);
-    
-    // Generate time range for weekends highlighting
-    const timeRange = d3.timeDay.range(minDate, maxDate);
-    
-    // Highlight weekends with clearer visual (group Saturday and Sunday together)
-    timeRange.forEach(date => {
-        if (date.getDay() === 6) { // Saturday
-            const sunday = new Date(date);
-            sunday.setDate(sunday.getDate() + 1);
-            const monday = new Date(date);
-            monday.setDate(monday.getDate() + 2);
-            
-            // Draw rectangle covering both Saturday and Sunday
-            svg.append('rect')
-                .attr('x', xScale(date))
-                .attr('y', 0)
-                .attr('width', xScale(monday) - xScale(date))
-                .attr('height', activities.length * 60)
-                .attr('fill', '#e8e8e8')
-                .attr('opacity', 0.7);
-            
-            // Add "Weekend" label centered on the weekend block
-            svg.append('text')
-                .attr('x', xScale(date) + (xScale(monday) - xScale(date)) / 2)
-                .attr('y', -10)
-                .attr('text-anchor', 'middle')
-                .style('font-size', '10px')
-                .style('fill', '#999')
-                .style('font-style', 'italic')
-                .text('Weekend');
-        }
-    });
-    
-    svg.append('g')
-        .attr('class', 'x-axis')
-        .attr('transform', `translate(0,${activities.length * 60})`)
-        .call(xAxis);
-    
-    // Draw activities
-    const bars = svg.selectAll('.bar')
-        .data(activities)
-        .enter()
-        .append('g')
-        .attr('class', 'activity-bar');
-    
-    // Activity labels (left side)
+
+    // Grid lines (vertical, one per day)
+    if (!hideWeekends) {
+        svg.append('g')
+            .attr('class', 'grid')
+            .attr('transform', `translate(0,${activities.length * 60})`)
+            .call(d3.axisBottom(xScale).ticks(d3.timeDay.every(1)).tickSize(-activities.length * 60).tickFormat(''));
+    } else {
+        // Draw vertical grid lines manually for each working day
+        workingDays.forEach(d => {
+            svg.append('line')
+                .attr('x1', xScale(d)).attr('x2', xScale(d))
+                .attr('y1', 0).attr('y2', activities.length * 60)
+                .style('stroke', gridLine).style('stroke-opacity', 0.7).style('shape-rendering', 'crispEdges');
+        });
+    }
+
+    // Weekend + holiday shading (only if not hidden)
+    if (!hideWeekends) {
+        allDays.forEach(date => {
+            const ds = dateToString(date);
+            const holiday = holidays.find(h => h.date === ds);
+
+            if (date.getDay() === 6) {
+                const monday = new Date(date);
+                monday.setDate(monday.getDate() + 2);
+                svg.append('rect')
+                    .attr('x', xScale(date)).attr('y', 0)
+                    .attr('width', xScale(monday) - xScale(date))
+                    .attr('height', activities.length * 60)
+                    .attr('fill', weekendFill).attr('opacity', 0.75);
+                svg.append('text')
+                    .attr('x', xScale(date) + (xScale(monday) - xScale(date)) / 2)
+                    .attr('y', -10).attr('text-anchor', 'middle')
+                    .style('font-size', '10px').style('fill', weekendText).style('font-style', 'italic')
+                    .text('Wknd');
+            }
+
+            if (holiday) {
+                const nextDay = new Date(date);
+                nextDay.setDate(nextDay.getDate() + 1);
+                svg.append('rect')
+                    .attr('x', xScale(date)).attr('y', 0)
+                    .attr('width', Math.max(xScale(nextDay) - xScale(date), 2))
+                    .attr('height', activities.length * 60)
+                    .attr('fill', holidayFill).attr('opacity', 0.85);
+                svg.append('text')
+                    .attr('x', xScale(date) + (xScale(nextDay) - xScale(date)) / 2)
+                    .attr('y', -10).attr('text-anchor', 'middle')
+                    .style('font-size', '9px').style('fill', isDark ? '#ff8080' : '#c0392b').style('font-style', 'italic')
+                    .text(holiday.label || 'Holiday');
+            }
+        });
+    } else {
+        // In hide-weekends mode, only shade holidays (which are working-day-adjacent)
+        allDays.filter(d => !isWeekend(d)).forEach(date => {
+            const ds = dateToString(date);
+            const holiday = holidays.find(h => h.date === ds);
+            if (holiday) {
+                const x = xScale(date);
+                const w = xScale.dayWidth;
+                svg.append('rect')
+                    .attr('x', x).attr('y', 0)
+                    .attr('width', w).attr('height', activities.length * 60)
+                    .attr('fill', holidayFill).attr('opacity', 0.85);
+                svg.append('text')
+                    .attr('x', x + w / 2).attr('y', -10)
+                    .attr('text-anchor', 'middle')
+                    .style('font-size', '9px').style('fill', isDark ? '#ff8080' : '#c0392b').style('font-style', 'italic')
+                    .text(holiday.label || 'Holiday');
+            }
+        });
+    }
+
+    // X axis
+    if (!hideWeekends) {
+        svg.append('g')
+            .attr('class', 'x-axis')
+            .attr('transform', `translate(0,${activities.length * 60})`)
+            .call(d3.axisBottom(xScale).ticks(d3.timeWeek.every(1)).tickFormat(d3.timeFormat('%m/%d')));
+    } else {
+        // Draw a simple axis with a tick every ~5 working days
+        const step = Math.max(1, Math.floor(workingDays.length / 20));
+        const axisGroup = svg.append('g')
+            .attr('class', 'x-axis')
+            .attr('transform', `translate(0,${activities.length * 60})`);
+
+        axisGroup.append('line')
+            .attr('x1', 0).attr('x2', width)
+            .attr('y1', 0).attr('y2', 0)
+            .style('stroke', axisStroke);
+
+        workingDays.filter((_, i) => i % step === 0).forEach(d => {
+            const x = xScale(d);
+            axisGroup.append('line')
+                .attr('x1', x).attr('x2', x).attr('y1', 0).attr('y2', 6)
+                .style('stroke', axisStroke);
+            axisGroup.append('text')
+                .attr('x', x).attr('y', 18).attr('text-anchor', 'middle')
+                .style('font-size', '12px').style('fill', axisText)
+                .text(d3.timeFormat('%m/%d')(d));
+        });
+    }
+
+    // Activity bars
+    const bars = svg.selectAll('.bar').data(activities).enter().append('g').attr('class', 'activity-bar');
+
     bars.append('text')
-        .attr('x', -10)
-        .attr('y', (d, i) => yScale(i) + yScale.bandwidth() / 2)
-        .attr('text-anchor', 'end')
-        .attr('dominant-baseline', 'middle')
-        .style('font-size', '14px')
-        .style('font-weight', '500')
+        .attr('x', -10).attr('y', (d, i) => yScale(i) + yScale.bandwidth() / 2)
+        .attr('text-anchor', 'end').attr('dominant-baseline', 'middle')
+        .style('font-size', '14px').style('font-weight', '500').style('fill', textPrimary)
         .text(d => d.name);
-    
-    // Activity bars - split by weekends
+
+    const oneDayWidth = xScale.isCustom
+        ? xScale.dayWidth
+        : xScale(d3.timeDay.offset(minDate, 1)) - xScale(minDate);
+
     bars.each(function(d, i) {
         const barGroup = d3.select(this);
         const segments = getWeekdaySegments(d.start, d.end);
-        const oneDayWidth = (xScale(d3.timeDay.offset(minDate, 1)) - xScale(minDate));
-        
-        // Draw each segment
-        segments.forEach(segment => {
-            const segmentStart = parseDate(segment.start);
-            const segmentEnd = parseDate(segment.end);
-            
-            // Calculate number of days in this segment (inclusive)
-            let daysInSegment = 0;
-            const tempDate = new Date(segmentStart);
-            while (tempDate <= segmentEnd) {
-                if (!isWeekend(tempDate)) {
-                    daysInSegment++;
-                }
-                tempDate.setDate(tempDate.getDate() + 1);
+
+        segments.forEach(seg => {
+            const segStart = d3ParseDate(seg.start);
+            const segEnd = d3ParseDate(seg.end);
+            let days = 0;
+            const tmp = new Date(segStart);
+            while (tmp <= segEnd) {
+                if (!isNonWorking(tmp)) days++;
+                tmp.setDate(tmp.getDate() + 1);
             }
-            
             barGroup.append('rect')
-                .attr('x', xScale(segmentStart))
-                .attr('y', yScale(i))
-                .attr('width', daysInSegment * oneDayWidth)
-                .attr('height', yScale.bandwidth())
-                .attr('fill', d.color)
-                .attr('rx', 4)
-                .attr('ry', 4)
-                .style('opacity', 0.8);
+                .attr('x', xScale(segStart)).attr('y', yScale(i))
+                .attr('width', days * oneDayWidth).attr('height', yScale.bandwidth())
+                .attr('fill', d.color).attr('rx', 4).attr('ry', 4)
+                .style('opacity', 0.85);
         });
     });
-    
-    // Date and working days labels on bars with contrast color
+
+    // Labels on bars
     bars.append('text')
-        .attr('class', 'date-text')
-        .attr('x', d => xScale(parseDate(d.start)) + 5)
+        .attr('x', d => xScale(d3ParseDate(d.start)) + 5)
         .attr('y', (d, i) => yScale(i) + yScale.bandwidth() / 2 - 8)
         .attr('dominant-baseline', 'middle')
-        .style('font-size', '11px')
-        .style('fill', d => getContrastColor(d.color))
-        .style('font-weight', 'bold')
-        .style('pointer-events', 'none')
-        .text(d => `${d.workingDays} working days`);
-    
+        .style('font-size', '11px').style('fill', d => getContrastColor(d.color))
+        .style('font-weight', 'bold').style('pointer-events', 'none')
+        .text(d => `${d.workingDays} wd × ${d.fte} FTE = ${d.calendarDays} days`);
+
     bars.append('text')
-        .attr('class', 'date-range-text')
-        .attr('x', d => xScale(parseDate(d.start)) + 5)
+        .attr('x', d => xScale(d3ParseDate(d.start)) + 5)
         .attr('y', (d, i) => yScale(i) + yScale.bandwidth() / 2 + 8)
         .attr('dominant-baseline', 'middle')
-        .style('font-size', '10px')
-        .style('fill', d => getContrastColor(d.color))
+        .style('font-size', '10px').style('fill', d => getContrastColor(d.color))
         .style('pointer-events', 'none')
         .text(d => `${d.start} → ${d.end}`);
-    
-    ganttChart = { activities, svg, xScale, yScale, parseDate, formatDate };
+
+    ganttChart = { activities, svg, xScale, yScale };
 }
 
-// Toggle custom start date field visibility based on dependency selection
+// ---------------------------------------------------------------------------
+// Export PNG
+// ---------------------------------------------------------------------------
+document.getElementById('exportPng').addEventListener('click', () => {
+    const svgEl = document.querySelector('#ganttChart svg');
+    if (!svgEl) return;
+
+    // Clone the SVG so we can safely mutate it without affecting the page
+    const svgClone = svgEl.cloneNode(true);
+
+    // Inject a <style> block into the SVG that embeds the same font stack used
+    // by the page. Without this, the browser's SVG→canvas rasterizer falls back
+    // to its built-in generic sans-serif font and ignores inherited CSS.
+    const fontFamily = getComputedStyle(document.body).fontFamily;
+    const computedStyle = getComputedStyle(document.documentElement);
+    const axisTextColor  = computedStyle.getPropertyValue('--axis-text').trim()   || '#666666';
+    const gridLineColor  = computedStyle.getPropertyValue('--grid-line').trim()   || '#e9ecef';
+    const axisStrokeColor = computedStyle.getPropertyValue('--axis-stroke').trim() || '#999999';
+    const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    styleEl.textContent = `
+        text { font-family: ${fontFamily}; }
+        .x-axis text { font-size: 12px; fill: ${axisTextColor}; }
+        .grid line { stroke: ${gridLineColor}; stroke-opacity: 0.7; }
+        .x-axis path, .x-axis line { stroke: ${axisStrokeColor}; }
+    `;
+    svgClone.insertBefore(styleEl, svgClone.firstChild);
+
+    // Set explicit background on the SVG root
+    const bgColor = document.body.classList.contains('dark') ? '#1e1e2e' : '#ffffff';
+    svgClone.style.background = bgColor;
+
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svgClone);
+    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = 2; // retina
+        canvas.width = svgEl.width.baseVal.value * scale;
+        canvas.height = svgEl.height.baseVal.value * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+
+        const a = document.createElement('a');
+        a.download = `${document.getElementById('projectName').value || 'timeline'}.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+    };
+    img.src = url;
+});
+
+// ---------------------------------------------------------------------------
+// Toggle custom start date
+// ---------------------------------------------------------------------------
 function toggleStartDateField(selectElement) {
-    const activityItem = selectElement.closest('.activity-item');
-    const customStartDiv = activityItem.querySelector('.custom-start-date');
-    
+    const item = selectElement.closest('.activity-item');
+    const customStartDiv = item.querySelector('.custom-start-date');
     if (selectElement.value === '') {
-        // No dependency selected - show custom start date
         customStartDiv.style.display = 'block';
     } else {
-        // Dependency selected - hide custom start date
         customStartDiv.style.display = 'none';
-        // Clear the custom start date value
-        activityItem.querySelector('.activity-custom-start').value = '';
+        item.querySelector('.activity-custom-start').value = '';
     }
 }
 
-// Initialize visibility of custom start date fields on page load
 document.addEventListener('DOMContentLoaded', () => {
-    const activityItems = document.querySelectorAll('.activity-item');
-    activityItems.forEach(item => {
-        const dependencySelect = item.querySelector('.activity-dependency');
-        toggleStartDateField(dependencySelect);
+    document.querySelectorAll('.activity-item').forEach(item => {
+        const sel = item.querySelector('.activity-dependency');
+        toggleStartDateField(sel);
     });
 });
 
-// Make functions available globally
-window.removeActivity = removeActivity;
-window.updateDependencyDropdowns = updateDependencyDropdowns;
-window.toggleStartDateField = toggleStartDateField;
-
-// --- Save / Load ---
-
+// ---------------------------------------------------------------------------
+// Save / Load
+// ---------------------------------------------------------------------------
 function collectProjectData() {
     const projectName = document.getElementById('projectName').value;
     const projectStart = document.getElementById('projectStart').value;
@@ -561,13 +722,14 @@ function collectProjectData() {
             id: item.dataset.id,
             name: item.querySelector('.activity-name').value,
             workingDays: item.querySelector('.activity-workdays').value,
+            fte: item.querySelector('.activity-fte').value,
             dependsOn: item.querySelector('.activity-dependency').value,
             customStart: item.querySelector('.activity-custom-start').value,
             color: item.querySelector('.activity-color').value,
         });
     });
 
-    return { projectName, projectStart, activities };
+    return { projectName, projectStart, holidays, activities };
 }
 
 function saveProject() {
@@ -575,7 +737,6 @@ function saveProject() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement('a');
     a.href = url;
     a.download = `${data.projectName || 'project'}.json`;
@@ -601,11 +762,14 @@ function restoreProjectData(data) {
     document.getElementById('projectName').value = data.projectName || '';
     document.getElementById('projectStart').value = data.projectStart || '';
 
+    // Restore holidays
+    holidays = Array.isArray(data.holidays) ? data.holidays : [];
+    renderHolidaysList();
+
     const container = document.getElementById('activitiesContainer');
     container.innerHTML = '';
     activityIdCounter = 0;
 
-    // First pass: create all activity items so dependency dropdowns can reference them
     data.activities.forEach(act => {
         const id = act.id ?? activityIdCounter;
         if (Number(id) >= activityIdCounter) activityIdCounter = Number(id) + 1;
@@ -615,9 +779,19 @@ function restoreProjectData(data) {
         item.dataset.id = id;
         item.innerHTML = `
             <input type="text" class="activity-name" placeholder="Activity Name" value="${escapeHtml(act.name || '')}" onchange="updateDependencyDropdowns()">
-            <div class="form-group">
-                <label>Working Days:</label>
-                <input type="number" class="activity-workdays" placeholder="5" value="${Number(act.workingDays) || 5}" min="1">
+            <div class="activity-fields">
+                <div class="form-group">
+                    <label>Working Days:</label>
+                    <input type="number" class="activity-workdays" placeholder="5" value="${Number(act.workingDays) || 5}" min="1">
+                </div>
+                <div class="form-group">
+                    <label>FTE:</label>
+                    <input type="number" class="activity-fte" placeholder="1" value="${parseFloat(act.fte) || 1}" min="0.1" step="0.1">
+                </div>
+                <div class="form-group fte-hint-group">
+                    <label>&nbsp;</label>
+                    <span class="fte-hint"></span>
+                </div>
             </div>
             <div class="form-group">
                 <label>Depends on:</label>
@@ -636,9 +810,12 @@ function restoreProjectData(data) {
             <button class="remove-activity" onclick="removeActivity(this)">Remove</button>
         `;
         container.appendChild(item);
+
+        item.querySelector('.activity-workdays').addEventListener('input', () => updateFteHint(item));
+        item.querySelector('.activity-fte').addEventListener('input', () => updateFteHint(item));
+        updateFteHint(item);
     });
 
-    // Second pass: rebuild dropdowns and restore dependency selections
     updateDependencyDropdowns();
     data.activities.forEach(act => {
         const item = container.querySelector(`.activity-item[data-id="${act.id}"]`);
@@ -648,7 +825,6 @@ function restoreProjectData(data) {
         toggleStartDateField(select);
     });
 
-    // Auto-generate the chart after restoring
     document.getElementById('generateTimeline').click();
 }
 
@@ -663,5 +839,11 @@ function escapeHtml(str) {
 document.getElementById('saveProject').addEventListener('click', saveProject);
 document.getElementById('loadProjectInput').addEventListener('change', (e) => {
     loadProject(e.target.files[0]);
-    e.target.value = ''; // reset so the same file can be loaded again
+    e.target.value = '';
 });
+
+// Make functions available globally
+window.removeActivity = removeActivity;
+window.updateDependencyDropdowns = updateDependencyDropdowns;
+window.toggleStartDateField = toggleStartDateField;
+window.removeHoliday = removeHoliday;
