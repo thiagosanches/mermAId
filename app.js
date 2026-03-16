@@ -273,7 +273,11 @@ document.getElementById('addActivity').addEventListener('click', () => {
     const color = getRandomColor();
 
     item.innerHTML = `
-        <input type="text" class="activity-name" placeholder="Activity Name" onchange="updateDependencyDropdowns()">
+        <button class="remove-activity" onclick="removeActivity(this)" title="Remove">✕</button>
+        <div class="activity-header-row">
+            <input type="text" class="activity-name" placeholder="Activity Name" onchange="updateDependencyDropdowns()">
+            <input type="color" class="activity-color activity-color-swatch" value="${color}" title="Color">
+        </div>
         <div class="activity-fields">
             <div class="form-group">
                 <label>Working Days:</label>
@@ -298,11 +302,6 @@ document.getElementById('addActivity').addEventListener('click', () => {
             <label>Custom Start Date:</label>
             <input type="date" class="activity-custom-start">
         </div>
-        <div class="color-picker-group">
-            <label>Color:</label>
-            <input type="color" class="activity-color" value="${color}">
-        </div>
-        <button class="remove-activity" onclick="removeActivity(this)">Remove</button>
     `;
 
     container.appendChild(item);
@@ -778,7 +777,11 @@ function restoreProjectData(data) {
         item.className = 'activity-item';
         item.dataset.id = id;
         item.innerHTML = `
-            <input type="text" class="activity-name" placeholder="Activity Name" value="${escapeHtml(act.name || '')}" onchange="updateDependencyDropdowns()">
+            <button class="remove-activity" onclick="removeActivity(this)" title="Remove">✕</button>
+            <div class="activity-header-row">
+                <input type="text" class="activity-name" placeholder="Activity Name" value="${escapeHtml(act.name || '')}" onchange="updateDependencyDropdowns()">
+                <input type="color" class="activity-color activity-color-swatch" value="${escapeHtml(act.color || '#667eea')}" title="Color">
+            </div>
             <div class="activity-fields">
                 <div class="form-group">
                     <label>Working Days:</label>
@@ -803,11 +806,6 @@ function restoreProjectData(data) {
                 <label>Custom Start Date:</label>
                 <input type="date" class="activity-custom-start" value="${escapeHtml(act.customStart || '')}">
             </div>
-            <div class="color-picker-group">
-                <label>Color:</label>
-                <input type="color" class="activity-color" value="${escapeHtml(act.color || '#667eea')}">
-            </div>
-            <button class="remove-activity" onclick="removeActivity(this)">Remove</button>
         `;
         container.appendChild(item);
 

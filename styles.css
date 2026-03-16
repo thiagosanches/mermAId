@@ -108,7 +108,7 @@ header p  { font-size: 1.05em; opacity: 0.9; }
 .form-section, .preview-section {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
     overflow-y: auto;
     min-height: 0; /* required for flex children to shrink and scroll */
 }
@@ -118,12 +118,12 @@ header p  { font-size: 1.05em; opacity: 0.9; }
    ----------------------------------------------------------------------- */
 h2 {
     color: var(--text-primary);
-    font-size: 1.8em;
-    border-bottom: 3px solid var(--accent);
-    padding-bottom: 10px;
+    font-size: 1.2em;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 6px;
 }
 
-h3 { color: var(--text-secondary); font-size: 1.3em; margin-top: 10px; }
+h3 { color: var(--text-secondary); font-size: 1.0em; margin-top: 4px; }
 
 /* -----------------------------------------------------------------------
    Form elements
@@ -131,23 +131,23 @@ h3 { color: var(--text-secondary); font-size: 1.3em; margin-top: 10px; }
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
 }
 
 label {
     font-weight: 600;
     color: var(--text-secondary);
-    font-size: 0.92em;
+    font-size: 0.8em;
 }
 
 input[type="text"],
 input[type="date"],
 input[type="number"],
 select {
-    padding: 10px 12px;
-    border: 2px solid var(--border-input);
+    padding: 5px 8px;
+    border: 1px solid var(--border-input);
     border-radius: 6px;
-    font-size: 0.95em;
+    font-size: 0.88em;
     background: var(--bg-input);
     color: var(--text-primary);
     transition: border-color 0.3s, background 0.3s;
@@ -167,24 +167,32 @@ select:focus {
 #activitiesContainer {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 4px;
 }
 
 .activity-item {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px;
+    gap: 6px;
+    padding: 8px 10px;
     background: var(--bg-form-item);
     border-radius: 8px;
-    border: 2px solid var(--bg-form-item-border);
+    border: 1px solid var(--bg-form-item-border);
     transition: background 0.3s, border-color 0.3s;
 }
 
+/* Name + color on one row */
+.activity-header-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+}
+
 .activity-item input,
-.activity-item select,
-.activity-item button {
+.activity-item select {
     width: 100%;
 }
 
@@ -192,39 +200,33 @@ select:focus {
 .activity-fields {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
+    gap: 6px;
 }
 
 .fte-hint {
     display: inline-block;
-    margin-top: 2px;
-    font-size: 0.82em;
+    margin-top: 1px;
+    font-size: 0.76em;
     color: var(--accent);
     font-weight: 600;
     white-space: nowrap;
-    padding-top: 10px;
+    padding-top: 6px;
 }
 
 .fte-hint-group {
     justify-content: flex-end;
 }
 
-/* Color picker */
-.color-picker-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.color-picker-group label { font-size: 0.9em; min-width: 50px; }
-.color-picker-group input[type="color"] {
-    width: 100%;
-    height: 38px;
-    border-radius: 6px;
+/* Color picker — compact inline swatch */
+.activity-color-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
     cursor: pointer;
-    padding: 2px;
-    border: 2px solid var(--border-input);
+    padding: 1px;
+    border: 1px solid var(--border-input);
     background: var(--bg-input);
+    flex-shrink: 0;
 }
 
 .custom-start-date { display: none; }
@@ -326,10 +328,10 @@ body.dark .holiday-tag {
    Buttons
    ----------------------------------------------------------------------- */
 .btn {
-    padding: 11px 22px;
+    padding: 7px 16px;
     border: none;
     border-radius: 6px;
-    font-size: 0.95em;
+    font-size: 0.88em;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.25s;
@@ -337,7 +339,7 @@ body.dark .holiday-tag {
     display: inline-block;
 }
 
-.btn-sm { padding: 8px 14px; font-size: 0.85em; }
+.btn-sm { padding: 5px 10px; font-size: 0.8em; }
 
 .btn-icon {
     background: rgba(255, 255, 255, 0.2);
@@ -367,24 +369,27 @@ body.dark .holiday-tag {
 .btn-secondary:hover { background: #5a6268; }
 
 .remove-activity {
-    background: #dc3545;
-    color: white;
-    padding: 8px 16px;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: none;
+    color: var(--text-muted);
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 0.85em;
-    width: 100%;
-    font-weight: 600;
-    transition: background 0.2s;
+    font-size: 1em;
+    line-height: 1;
+    padding: 2px 5px;
+    transition: color 0.2s, background 0.2s;
+    width: auto !important;
 }
 
-.remove-activity:hover { background: #c82333; }
+.remove-activity:hover { color: #dc3545; background: rgba(220, 53, 69, 0.1); }
 
 .project-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 4px;
+    gap: 6px;
+    margin-top: 2px;
 }
 
 .project-actions .btn { flex: 1; }
@@ -479,19 +484,30 @@ body.dark .holiday-tag {
    Instructions
    ----------------------------------------------------------------------- */
 .instructions {
-    padding: 18px;
+    padding: 10px 12px;
     background: var(--bg-form-item);
     border-radius: 8px;
-    border-left: 4px solid var(--accent);
+    border-left: 3px solid var(--accent);
     transition: background 0.3s;
+    font-size: 0.85em;
 }
 
-.instructions h3 { margin-bottom: 12px; color: var(--accent); }
+.instructions summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--accent);
+    list-style: none;
+    user-select: none;
+}
 
-.instructions ul { list-style: none; padding: 0; }
+.instructions summary::-webkit-details-marker { display: none; }
+.instructions summary::before { content: '▶ '; font-size: 0.7em; }
+.instructions[open] summary::before { content: '▼ '; }
+
+.instructions ul { list-style: none; padding: 0; margin-top: 6px; }
 
 .instructions li {
-    padding: 6px 0 6px 24px;
+    padding: 3px 0 3px 18px;
     position: relative;
     color: var(--text-secondary);
     font-size: 0.92em;

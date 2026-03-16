@@ -59,7 +59,11 @@
                 <h3>Activities</h3>
                 <div id="activitiesContainer">
                     <div class="activity-item" data-id="0">
-                        <input type="text" class="activity-name" placeholder="Activity Name" value="Refinement" onchange="updateDependencyDropdowns()">
+                        <button class="remove-activity" onclick="removeActivity(this)" title="Remove">✕</button>
+                        <div class="activity-header-row">
+                            <input type="text" class="activity-name" placeholder="Activity Name" value="Refinement" onchange="updateDependencyDropdowns()">
+                            <input type="color" class="activity-color activity-color-swatch" value="#667eea" title="Color">
+                        </div>
                         <div class="activity-fields">
                             <div class="form-group">
                                 <label>Working Days:</label>
@@ -84,11 +88,6 @@
                             <label>Custom Start Date:</label>
                             <input type="date" class="activity-custom-start">
                         </div>
-                        <div class="color-picker-group">
-                            <label>Color:</label>
-                            <input type="color" class="activity-color" value="#667eea">
-                        </div>
-                        <button class="remove-activity" onclick="removeActivity(this)">Remove</button>
                     </div>
                 </div>
 
@@ -100,16 +99,16 @@
                     <input type="file" id="loadProjectInput" accept=".json" style="display:none">
                 </div>
 
-                <div class="instructions">
-                    <h3>Instructions</h3>
+                <details class="instructions">
+                    <summary>How to use</summary>
                     <ul>
                         <li>Enter working days and FTE per activity</li>
-                        <li>Calendar days = working days ÷ FTE</li>
+                        <li>Calendar days = working days &divide; FTE</li>
                         <li>Add holidays to skip specific dates</li>
                         <li>Set dependencies to link activities</li>
                         <li>Click Generate to create the chart</li>
                     </ul>
-                </div>
+                </details>
             </div>
 
             <div class="preview-section">
