@@ -49,15 +49,18 @@
     --header-text:        #e8f4fd;
     --header-subtext:     #7dbce8;
 
-    /* Form sidebar — brand navy, one step lighter than header */
-    --form-bg:            #0a6ea8;
-    --form-border:        #0c5d8e;
+    /* Form sidebar */
+    --form-bg:            #b3b2b3;
+    --form-border:        #9a9899;
+    --form-text-primary:  #082b45;
+    --form-text-secondary:#0967aa;
+    --form-text-muted:    #3d6070;
     --form-input-bg:      #ffffff;
     --form-input-border:  #c6dcec;
     --form-card-bg:       #ffffff;
     --form-card-border:   #c6dcec;
-    --bg-form-item:       #0a6ea8;
-    --bg-form-item-border:#0c5d8e;
+    --bg-form-item:       #b3b2b3;
+    --bg-form-item-border:#9a9899;
 }
 
 /* -----------------------------------------------------------------------
