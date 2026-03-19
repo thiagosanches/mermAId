@@ -51,20 +51,20 @@
 
     /* Form sidebar — brand navy, one step lighter than header */
     --form-bg:            #082b45;
-    --form-border:        #0c3d5e;
+    --form-border:        #1a3a50;
     --form-text-primary:  #e8f4fd;
     --form-text-secondary:#7dbce8;
     --form-text-muted:    #4a7fa8;
-    --form-input-bg:      #0a3354;
-    --form-input-border:  #0f4a78;
-    --form-card-bg:       #0a3354;
-    --form-card-border:   #0f4a78;
-    --form-divider:       #0c3d5e;
+    --form-input-bg:      #1c3244;
+    --form-input-border:  #2a4558;
+    --form-card-bg:       #1c3244;
+    --form-card-border:   #2a4558;
+    --form-divider:       #1a3a50;
     --form-accent-subtle: #051e30;
 
     /* Legacy aliases */
     --bg-form-item:       #082b45;
-    --bg-form-item-border:#0c3d5e;
+    --bg-form-item-border:#1a3a50;
 }
 
 /* -----------------------------------------------------------------------
@@ -112,22 +112,22 @@ body.dark {
     --header-text:        #e8f4fd;
     --header-subtext:     #3d6e90;
 
-    /* Form sidebar — deepened navy in dark mode */
+    /* Form sidebar — deepened in dark mode */
     --form-bg:            #031422;
-    --form-border:        #082b45;
+    --form-border:        #152535;
     --form-text-primary:  #e8f4fd;
     --form-text-secondary:#7dbce8;
     --form-text-muted:    #3d6e90;
-    --form-input-bg:      #061724;
-    --form-input-border:  #082b45;
-    --form-card-bg:       #061724;
-    --form-card-border:   #082b45;
-    --form-divider:       #082b45;
+    --form-input-bg:      #142230;
+    --form-input-border:  #1e3345;
+    --form-card-bg:       #142230;
+    --form-card-border:   #1e3345;
+    --form-divider:       #152535;
     --form-accent-subtle: #020e18;
 
     /* Legacy aliases */
     --bg-form-item:       #031422;
-    --bg-form-item-border:#082b45;
+    --bg-form-item-border:#152535;
 }
 
 /* -----------------------------------------------------------------------
