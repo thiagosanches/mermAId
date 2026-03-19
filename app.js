@@ -501,6 +501,8 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
     const accentSubtle  = style.getPropertyValue('--accent-subtle').trim() || '#EEF2FF';
     const weekBandOdd   = style.getPropertyValue('--week-band-odd').trim()  || 'transparent';
     const weekBandEven  = style.getPropertyValue('--week-band-even').trim() || accentSubtle;
+    const monthBandOdd  = weekBandOdd;
+    const monthBandEven = weekBandEven;
 
     // Extra top margin for the two-row axis header (week row + month row)
     const margin = { top: 60, right: 40, bottom: 80, left: 200 };
@@ -787,7 +789,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
                 monthAxis.append('rect')
                     .attr('x', mStart).attr('y', 0)
                     .attr('width', mWidth).attr('height', monthRowHeight)
-                    .attr('fill', accentSubtle)
+                    .attr('fill', idx % 2 === 0 ? monthBandEven : monthBandOdd)
                     .attr('stroke', axisStroke).attr('stroke-width', 1.5);
 
                 monthAxis.append('text')
@@ -920,7 +922,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
                 monthAxisG.append('rect')
                     .attr('x', x1).attr('y', 0)
                     .attr('width', mWidth).attr('height', monthRowHeight)
-                    .attr('fill', accentSubtle)
+                    .attr('fill', idx % 2 === 0 ? monthBandEven : monthBandOdd)
                     .attr('stroke', axisStroke).attr('stroke-width', 1.5);
 
                 monthAxisG.append('text')
