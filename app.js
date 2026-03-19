@@ -2,7 +2,58 @@
 let activityIdCounter = 1;
 let ganttChart = null;
 let holidays = []; // [{ date: 'YYYY-MM-DD', label: 'Holiday name' }]
-let hideWeekends = false;
+let showWeekends = false; // default: weekends are hidden
+let autosaveTimer = null;
+
+// ---------------------------------------------------------------------------
+// localStorage persistence
+// ---------------------------------------------------------------------------
+const STORAGE_KEY = 'ez-gantt-project';
+
+function saveToLocalStorage() {
+    try {
+        const data = collectProjectData(); // already includes showWeekends
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        showAutosaveStatus('Saved');
+    } catch (e) {
+        // Quota exceeded or private mode — silently ignore
+    }
+}
+
+function loadFromLocalStorage() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== 'object') return false;
+        return data;
+    } catch {
+        return false;
+    }
+}
+
+let autosaveStatusTimer = null;
+function showAutosaveStatus(msg) {
+    const el = document.getElementById('autosaveStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('visible');
+    clearTimeout(autosaveStatusTimer);
+    autosaveStatusTimer = setTimeout(() => el.classList.remove('visible'), 2000);
+}
+
+function scheduleSave() {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(saveToLocalStorage, 600);
+}
+
+// Attach autosave listeners to all DOM inputs/selects in the form
+function attachAutosaveListeners() {
+    const form = document.querySelector('.form-section');
+    if (!form) return;
+    form.addEventListener('input', scheduleSave);
+    form.addEventListener('change', scheduleSave);
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,12 +62,20 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDependencyDropdowns();
     initDarkMode();
     initFteHints();
+    attachAutosaveListeners();
 
-    document.getElementById('hideWeekends').addEventListener('change', (e) => {
-        hideWeekends = e.target.checked;
+    document.getElementById('showWeekends').addEventListener('change', (e) => {
+        showWeekends = e.target.checked;
+        scheduleSave();
         // Re-render if a chart already exists
         if (ganttChart) document.getElementById('generateTimeline').click();
     });
+
+    // Restore from localStorage (skip if nothing saved)
+    const saved = loadFromLocalStorage();
+    if (saved) {
+        restoreProjectData(saved, /* autoGenerate */ true);
+    }
 });
 
 // ---------------------------------------------------------------------------
@@ -70,6 +129,7 @@ function renderHolidaysList() {
 function removeHoliday(index) {
     holidays.splice(index, 1);
     renderHolidaysList();
+    scheduleSave();
 }
 
 document.getElementById('addHoliday').addEventListener('click', () => {
@@ -83,6 +143,7 @@ document.getElementById('addHoliday').addEventListener('click', () => {
     dateInput.value = '';
     labelInput.value = '';
     renderHolidaysList();
+    scheduleSave();
 });
 
 document.getElementById('exportHolidays').addEventListener('click', () => {
@@ -111,6 +172,7 @@ document.getElementById('importHolidaysInput').addEventListener('change', (e) =>
             });
             holidays.sort((a, b) => a.date.localeCompare(b.date));
             renderHolidaysList();
+            scheduleSave();
         } catch {
             alert('Invalid holidays file. Expected a JSON array.');
         }
@@ -314,11 +376,13 @@ document.getElementById('addActivity').addEventListener('click', () => {
     item.querySelector('.activity-workdays').addEventListener('input', () => updateFteHint(item));
     item.querySelector('.activity-fte').addEventListener('input', () => updateFteHint(item));
     updateFteHint(item);
+    scheduleSave();
 });
 
 function removeActivity(button) {
     button.closest('.activity-item').remove();
     updateDependencyDropdowns();
+    scheduleSave();
 }
 
 // ---------------------------------------------------------------------------
@@ -392,6 +456,7 @@ document.getElementById('generateTimeline').addEventListener('click', () => {
     renderGanttChart(projectName, projectStart, projectEnd, updated);
 
     document.getElementById('exportPng').style.display = 'inline-block';
+    scheduleSave();
 });
 
 // ---------------------------------------------------------------------------
@@ -413,7 +478,8 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
     const gridLine      = style.getPropertyValue('--grid-line').trim()    || '#e9ecef';
     const axisStroke    = style.getPropertyValue('--axis-stroke').trim()  || '#999999';
 
-    const margin = { top: 60, right: 40, bottom: 60, left: 200 };
+    // Extra top margin for the two-row axis header (week row + month row)
+    const margin = { top: 60, right: 40, bottom: 80, left: 200 };
     const totalWidth = container.clientWidth - margin.left - margin.right;
     const height = Math.max(400, activities.length * 60 + 100);
 
@@ -423,14 +489,17 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
     const maxDate = d3ParseDate(projectEnd);
     const allDays = d3.timeDay.range(minDate, maxDate);
 
+    // hideWeekends = !showWeekends — when weekends are NOT shown we build a band scale
+    const hideWeekends = !showWeekends;
+
     // When hiding weekends we build a band scale over working days only
     let xScale;
-    let workingDays; // used only in hideWeekends mode
+    let workingDaysList; // used only in hideWeekends mode
     if (hideWeekends) {
-        workingDays = allDays.filter(d => !isWeekend(d) && !isHoliday(dateToString(d)));
-        const dayWidth = totalWidth / workingDays.length;
+        workingDaysList = allDays.filter(d => !isWeekend(d) && !isHoliday(dateToString(d)));
+        const dayWidth = totalWidth / workingDaysList.length;
         // Map each working-day date → its pixel x position
-        const dayIndex = new Map(workingDays.map((d, i) => [dateToString(d), i * dayWidth]));
+        const dayIndex = new Map(workingDaysList.map((d, i) => [dateToString(d), i * dayWidth]));
         // xScale accepts a Date and returns the pixel x of that day
         xScale = (date) => {
             const ds = dateToString(date);
@@ -446,6 +515,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
         };
         xScale.dayWidth = dayWidth;
         xScale.isCustom = true;
+        xScale.workingDaysList = workingDaysList;
     } else {
         xScale = d3.scaleTime().domain([minDate, maxDate]).range([0, totalWidth]);
         xScale.isCustom = false;
@@ -481,7 +551,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
             .call(d3.axisBottom(xScale).ticks(d3.timeDay.every(1)).tickSize(-activities.length * 60).tickFormat(''));
     } else {
         // Draw vertical grid lines manually for each working day
-        workingDays.forEach(d => {
+        workingDaysList.forEach(d => {
             svg.append('line')
                 .attr('x1', xScale(d)).attr('x2', xScale(d))
                 .attr('y1', 0).attr('y2', activities.length * 60)
@@ -489,8 +559,9 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
         });
     }
 
-    // Weekend + holiday shading (only if not hidden)
+    // Weekend + holiday shading
     if (!hideWeekends) {
+        // Normal mode: shade weekend blocks and holidays on the full calendar scale
         allDays.forEach(date => {
             const ds = dateToString(date);
             const holiday = holidays.find(h => h.date === ds);
@@ -526,53 +597,172 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
             }
         });
     } else {
-        // In hide-weekends mode, only shade holidays (which are working-day-adjacent)
-        allDays.filter(d => !isWeekend(d)).forEach(date => {
-            const ds = dateToString(date);
-            const holiday = holidays.find(h => h.date === ds);
-            if (holiday) {
-                const x = xScale(date);
-                const w = xScale.dayWidth;
-                svg.append('rect')
-                    .attr('x', x).attr('y', 0)
-                    .attr('width', w).attr('height', activities.length * 60)
-                    .attr('fill', holidayFill).attr('opacity', 0.85);
-                svg.append('text')
-                    .attr('x', x + w / 2).attr('y', -10)
-                    .attr('text-anchor', 'middle')
-                    .style('font-size', '9px').style('fill', isDark ? '#ff8080' : '#c0392b').style('font-style', 'italic')
-                    .text(holiday.label || 'Holiday');
+        // Hide-weekends mode: holidays are excluded from workingDaysList, so the band scale
+        // has no slot for them. We insert a visual stripe between the last working day before
+        // the holiday and the first working day after it.
+        const dayWidth = xScale.dayWidth;
+        const wdList = xScale.workingDaysList;
+
+        const allWeekdayHolidays = allDays.filter(d => !isWeekend(d) && isHoliday(dateToString(d)));
+
+        allWeekdayHolidays.forEach(hDate => {
+            const hDs = dateToString(hDate);
+            const holiday = holidays.find(h => h.date === hDs);
+
+            // Find the index of the last working day strictly before this holiday
+            let prevWdIdx = -1;
+            for (let i = wdList.length - 1; i >= 0; i--) {
+                if (wdList[i] < hDate) { prevWdIdx = i; break; }
             }
+
+            // x position: right after the previous working day's slot (or at 0 if it's first)
+            const x = prevWdIdx >= 0 ? (prevWdIdx + 1) * dayWidth : 0;
+
+            svg.append('rect')
+                .attr('x', x).attr('y', 0)
+                .attr('width', Math.min(dayWidth, width - x))
+                .attr('height', activities.length * 60)
+                .attr('fill', holidayFill).attr('opacity', 0.85);
+            svg.append('text')
+                .attr('x', x + dayWidth / 2).attr('y', -10)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '9px').style('fill', isDark ? '#ff8080' : '#c0392b').style('font-style', 'italic')
+                .text(holiday ? (holiday.label || 'Holiday') : 'Holiday');
         });
     }
 
-    // X axis
-    if (!hideWeekends) {
-        svg.append('g')
-            .attr('class', 'x-axis')
-            .attr('transform', `translate(0,${activities.length * 60})`)
-            .call(d3.axisBottom(xScale).ticks(d3.timeWeek.every(1)).tickFormat(d3.timeFormat('%m/%d')));
-    } else {
-        // Draw a simple axis with a tick every ~5 working days
-        const step = Math.max(1, Math.floor(workingDays.length / 20));
-        const axisGroup = svg.append('g')
-            .attr('class', 'x-axis')
-            .attr('transform', `translate(0,${activities.length * 60})`);
+    // ---------------------------------------------------------------------------
+    // X axis with two header rows: WEEK row + MONTH row
+    // ---------------------------------------------------------------------------
+    const axisY = activities.length * 60;
+    const weekRowHeight = 22;   // height of the WEEK label row
+    const monthRowHeight = 22;  // height of the MONTH label row
 
-        axisGroup.append('line')
+    if (!hideWeekends) {
+        // --- Normal (show-weekends) mode ---
+        // Draw week ticks + labels (row 1)
+        const weekAxis = svg.append('g')
+            .attr('class', 'x-axis x-axis-weeks')
+            .attr('transform', `translate(0,${axisY})`);
+
+        weekAxis.append('line')
             .attr('x1', 0).attr('x2', width)
             .attr('y1', 0).attr('y2', 0)
             .style('stroke', axisStroke);
 
-        workingDays.filter((_, i) => i % step === 0).forEach(d => {
-            const x = xScale(d);
-            axisGroup.append('line')
-                .attr('x1', x).attr('x2', x).attr('y1', 0).attr('y2', 6)
+        const weeks = d3.timeWeek.range(minDate, maxDate);
+        weeks.forEach((w, idx) => {
+            const x1 = xScale(w);
+            const x2 = idx + 1 < weeks.length
+                ? xScale(weeks[idx + 1])
+                : width;
+            weekAxis.append('line')
+                .attr('x1', x1).attr('x2', x1).attr('y1', 0).attr('y2', 5)
                 .style('stroke', axisStroke);
-            axisGroup.append('text')
-                .attr('x', x).attr('y', 18).attr('text-anchor', 'middle')
-                .style('font-size', '12px').style('fill', axisText)
-                .text(d3.timeFormat('%m/%d')(d));
+            weekAxis.append('text')
+                .attr('x', (x1 + x2) / 2).attr('y', 17).attr('text-anchor', 'middle')
+                .style('font-size', '11px').style('fill', axisText)
+                .text(d3.timeFormat('W%V')(w));
+        });
+
+        // Draw month bands (row 2)
+        const monthAxis = svg.append('g')
+            .attr('class', 'x-axis x-axis-months')
+            .attr('transform', `translate(0,${axisY + weekRowHeight})`);
+
+        const months = d3.timeMonth.range(d3.timeMonth.floor(minDate), maxDate);
+        months.forEach((m, idx) => {
+            const mStart = Math.max(xScale(m), 0);
+            const mEnd = idx + 1 < months.length
+                ? Math.min(xScale(months[idx + 1]), width)
+                : width;
+            const mWidth = mEnd - mStart;
+
+            monthAxis.append('rect')
+                .attr('x', mStart).attr('y', 0)
+                .attr('width', mWidth).attr('height', monthRowHeight - 2)
+                .attr('fill', 'none')
+                .attr('stroke', axisStroke).attr('stroke-width', 0.5);
+
+            monthAxis.append('text')
+                .attr('x', mStart + mWidth / 2).attr('y', monthRowHeight / 2)
+                .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+                .style('font-size', '11px').style('font-weight', '600').style('fill', axisText)
+                .text(d3.timeFormat('%B %Y')(m));
+        });
+
+    } else {
+        // --- Hide-weekends (compressed) mode ---
+        const wdList = xScale.workingDaysList;
+        const dayWidth = xScale.dayWidth;
+
+        // Week row: group consecutive working days by ISO week
+        const weekGroups = [];
+        let curWeek = null;
+        wdList.forEach((d, i) => {
+            const wk = d3.timeFormat('%Y-W%V')(d);
+            if (wk !== curWeek) {
+                weekGroups.push({ key: wk, date: d, startIdx: i });
+                curWeek = wk;
+            }
+        });
+
+        const weekAxisG = svg.append('g')
+            .attr('class', 'x-axis x-axis-weeks')
+            .attr('transform', `translate(0,${axisY})`);
+
+        weekAxisG.append('line')
+            .attr('x1', 0).attr('x2', width)
+            .attr('y1', 0).attr('y2', 0)
+            .style('stroke', axisStroke);
+
+        weekGroups.forEach((wg, idx) => {
+            const x1 = wg.startIdx * dayWidth;
+            const nextIdx = idx + 1 < weekGroups.length ? weekGroups[idx + 1].startIdx : wdList.length;
+            const x2 = nextIdx * dayWidth;
+
+            weekAxisG.append('line')
+                .attr('x1', x1).attr('x2', x1).attr('y1', 0).attr('y2', 5)
+                .style('stroke', axisStroke);
+
+            weekAxisG.append('text')
+                .attr('x', (x1 + x2) / 2).attr('y', 17).attr('text-anchor', 'middle')
+                .style('font-size', '11px').style('fill', axisText)
+                .text(d3.timeFormat('W%V')(wg.date));
+        });
+
+        // Month row: group working days by month
+        const monthGroups = [];
+        let curMonth = null;
+        wdList.forEach((d, i) => {
+            const mk = d3.timeFormat('%Y-%m')(d);
+            if (mk !== curMonth) {
+                monthGroups.push({ key: mk, date: d, startIdx: i });
+                curMonth = mk;
+            }
+        });
+
+        const monthAxisG = svg.append('g')
+            .attr('class', 'x-axis x-axis-months')
+            .attr('transform', `translate(0,${axisY + weekRowHeight})`);
+
+        monthGroups.forEach((mg, idx) => {
+            const x1 = mg.startIdx * dayWidth;
+            const nextIdx = idx + 1 < monthGroups.length ? monthGroups[idx + 1].startIdx : wdList.length;
+            const x2 = nextIdx * dayWidth;
+            const mWidth = x2 - x1;
+
+            monthAxisG.append('rect')
+                .attr('x', x1).attr('y', 0)
+                .attr('width', mWidth).attr('height', monthRowHeight - 2)
+                .attr('fill', 'none')
+                .attr('stroke', axisStroke).attr('stroke-width', 0.5);
+
+            monthAxisG.append('text')
+                .attr('x', x1 + mWidth / 2).attr('y', monthRowHeight / 2)
+                .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+                .style('font-size', '11px').style('font-weight', '600').style('fill', axisText)
+                .text(d3.timeFormat('%B %Y')(mg.date));
         });
     }
 
@@ -728,7 +918,7 @@ function collectProjectData() {
         });
     });
 
-    return { projectName, projectStart, holidays, activities };
+    return { projectName, projectStart, holidays, activities, showWeekends };
 }
 
 function saveProject() {
@@ -757,9 +947,15 @@ function loadProject(file) {
     reader.readAsText(file);
 }
 
-function restoreProjectData(data) {
+function restoreProjectData(data, autoGenerate = true) {
     document.getElementById('projectName').value = data.projectName || '';
     document.getElementById('projectStart').value = data.projectStart || '';
+
+    // Restore showWeekends toggle
+    if (typeof data.showWeekends === 'boolean') {
+        showWeekends = data.showWeekends;
+        document.getElementById('showWeekends').checked = showWeekends;
+    }
 
     // Restore holidays
     holidays = Array.isArray(data.holidays) ? data.holidays : [];
@@ -823,7 +1019,7 @@ function restoreProjectData(data) {
         toggleStartDateField(select);
     });
 
-    document.getElementById('generateTimeline').click();
+    if (autoGenerate) document.getElementById('generateTimeline').click();
 }
 
 function escapeHtml(str) {

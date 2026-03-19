@@ -634,3 +634,32 @@ body.dark .remove-activity:hover {
     padding-bottom: 2px;
     border-bottom: 1px solid var(--bg-form-item-border);
 }
+
+/* -----------------------------------------------------------------------
+   Autosave status indicator
+   ----------------------------------------------------------------------- */
+.autosave-status {
+    font-size: 0.72em;
+    color: var(--text-muted);
+    font-style: italic;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    margin-top: 2px;
+    text-align: right;
+    display: block;
+}
+
+.autosave-status.visible {
+    opacity: 1;
+}
+
+/* -----------------------------------------------------------------------
+   X-axis month row rects styling
+   ----------------------------------------------------------------------- */
+.x-axis-months rect {
+    fill: var(--accent-subtle);
+}
+
+body.dark .x-axis-months rect {
+    fill: var(--accent-subtle);
+}

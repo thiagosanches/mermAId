@@ -98,6 +98,7 @@
                     <label for="loadProjectInput" class="btn btn-secondary">Load project</label>
                     <input type="file" id="loadProjectInput" accept=".json" style="display:none">
                 </div>
+                <span id="autosaveStatus" class="autosave-status"></span>
 
                 <details class="instructions">
                     <summary>How to use</summary>
@@ -115,7 +116,7 @@
                 <div class="preview-header">
                     <h2>Timeline Preview</h2>
                     <label class="toggle-label">
-                        <input type="checkbox" id="hideWeekends"> Hide weekends
+                        <input type="checkbox" id="showWeekends"> Show weekends
                     </label>
                     <button id="exportPng" class="btn btn-secondary" style="display:none">Export PNG</button>
                 </div>
