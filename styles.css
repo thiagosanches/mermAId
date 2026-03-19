@@ -32,6 +32,8 @@
     --weekend-bg:         #F1F5F9;
     --weekend-text:       #94A3B8;
     --holiday-bg:         #FEF2F2;
+    --week-band-odd:      transparent;
+    --week-band-even:     #EEF2FF;
 
     /* Elevation */
     --shadow-sm:          0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04);
@@ -67,6 +69,8 @@ body.dark {
     --weekend-bg:         #1E293B;
     --weekend-text:       #475569;
     --holiday-bg:         #2D1515;
+    --week-band-odd:      transparent;
+    --week-band-even:     #1E1B4B;
 
     --shadow-sm:          0 1px 3px rgba(0,0,0,0.3);
     --shadow-md:          0 4px 16px rgba(0,0,0,0.4);
@@ -654,12 +658,9 @@ body.dark .remove-activity:hover {
 }
 
 /* -----------------------------------------------------------------------
-   X-axis month row rects styling
+   X-axis row styling — week and month bands
    ----------------------------------------------------------------------- */
+.x-axis-weeks rect,
 .x-axis-months rect {
-    fill: var(--accent-subtle);
-}
-
-body.dark .x-axis-months rect {
-    fill: var(--accent-subtle);
+    /* fills are set inline from JS using CSS variables; no override needed */
 }

@@ -477,6 +477,9 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
     const axisText      = style.getPropertyValue('--axis-text').trim()    || '#666666';
     const gridLine      = style.getPropertyValue('--grid-line').trim()    || '#e9ecef';
     const axisStroke    = style.getPropertyValue('--axis-stroke').trim()  || '#999999';
+    const accentSubtle  = style.getPropertyValue('--accent-subtle').trim() || '#EEF2FF';
+    const weekBandOdd   = style.getPropertyValue('--week-band-odd').trim()  || 'transparent';
+    const weekBandEven  = style.getPropertyValue('--week-band-even').trim() || accentSubtle;
 
     // Extra top margin for the two-row axis header (week row + month row)
     const margin = { top: 60, right: 40, bottom: 80, left: 200 };
@@ -629,8 +632,8 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
     // X axis with two header rows: WEEK row + MONTH row
     // ---------------------------------------------------------------------------
     const axisY = activities.length * 60;
-    const weekRowHeight = 22;   // height of the WEEK label row
-    const monthRowHeight = 22;  // height of the MONTH label row
+    const weekRowHeight = 24;   // height of the WEEK label row
+    const monthRowHeight = 24;  // height of the MONTH label row
 
     if (!hideWeekends) {
         // --- Normal (show-weekends) mode ---
@@ -638,11 +641,6 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
         const weekAxis = svg.append('g')
             .attr('class', 'x-axis x-axis-weeks')
             .attr('transform', `translate(0,${axisY})`);
-
-        weekAxis.append('line')
-            .attr('x1', 0).attr('x2', width)
-            .attr('y1', 0).attr('y2', 0)
-            .style('stroke', axisStroke);
 
         // If the project doesn't start on a Monday the first (partial) week is W0;
         // full weeks start at W1. Monday = getDay() 1.
@@ -657,32 +655,51 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
             return m;
         }).filter(m => m >= minDate && m < maxDate);
 
-        // Draw the partial first week (before the first Monday) if project starts mid-week
+        // Build a unified list of week segments for drawing (W0 + W1, W2…)
+        const weekSegments = [];
         if (!startsOnMonday) {
-            const x1 = xScale(minDate);
-            const x2 = mondayWeeks.length > 0 ? xScale(mondayWeeks[0]) : width;
-            weekAxis.append('line')
-                .attr('x1', x1).attr('x2', x1).attr('y1', 0).attr('y2', 5)
-                .style('stroke', axisStroke);
-            weekAxis.append('text')
-                .attr('x', (x1 + x2) / 2).attr('y', 17).attr('text-anchor', 'middle')
-                .style('font-size', '11px').style('fill', axisText)
-                .text('W0');
+            weekSegments.push({
+                x1: xScale(minDate),
+                x2: mondayWeeks.length > 0 ? xScale(mondayWeeks[0]) : width,
+                label: 'W0',
+            });
         }
-
         mondayWeeks.forEach((w, idx) => {
-            const x1 = xScale(w);
-            const x2 = idx + 1 < mondayWeeks.length
-                ? xScale(mondayWeeks[idx + 1])
-                : width;
-            weekAxis.append('line')
-                .attr('x1', x1).attr('x2', x1).attr('y1', 0).attr('y2', 5)
-                .style('stroke', axisStroke);
-            weekAxis.append('text')
-                .attr('x', (x1 + x2) / 2).attr('y', 17).attr('text-anchor', 'middle')
-                .style('font-size', '11px').style('fill', axisText)
-                .text(`W${idx + 1}`);
+            weekSegments.push({
+                x1: xScale(w),
+                x2: idx + 1 < mondayWeeks.length ? xScale(mondayWeeks[idx + 1]) : width,
+                label: `W${idx + 1}`,
+            });
         });
+
+        // Draw background bands (alternating) then divider lines then labels
+        weekSegments.forEach((seg, idx) => {
+            const bandFill = idx % 2 === 0 ? weekBandEven : weekBandOdd;
+            weekAxis.append('rect')
+                .attr('x', seg.x1).attr('y', 0)
+                .attr('width', seg.x2 - seg.x1).attr('height', weekRowHeight)
+                .attr('fill', bandFill);
+            // Left border line (full row height, weight 1.5px)
+            weekAxis.append('line')
+                .attr('x1', seg.x1).attr('x2', seg.x1)
+                .attr('y1', 0).attr('y2', weekRowHeight)
+                .style('stroke', axisStroke).style('stroke-width', 1.5);
+            weekAxis.append('text')
+                .attr('x', (seg.x1 + seg.x2) / 2).attr('y', weekRowHeight / 2)
+                .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+                .style('font-size', '11px').style('font-weight', '600').style('fill', axisText)
+                .text(seg.label);
+        });
+        // Closing right border
+        weekAxis.append('line')
+            .attr('x1', width).attr('x2', width)
+            .attr('y1', 0).attr('y2', weekRowHeight)
+            .style('stroke', axisStroke).style('stroke-width', 1.5);
+        // Bottom border
+        weekAxis.append('line')
+            .attr('x1', 0).attr('x2', width)
+            .attr('y1', weekRowHeight).attr('y2', weekRowHeight)
+            .style('stroke', axisStroke).style('stroke-width', 1.5);
 
         // Draw month bands (row 2)
         const monthAxis = svg.append('g')
@@ -699,14 +716,14 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
 
             monthAxis.append('rect')
                 .attr('x', mStart).attr('y', 0)
-                .attr('width', mWidth).attr('height', monthRowHeight - 2)
-                .attr('fill', 'none')
-                .attr('stroke', axisStroke).attr('stroke-width', 0.5);
+                .attr('width', mWidth).attr('height', monthRowHeight)
+                .attr('fill', accentSubtle)
+                .attr('stroke', axisStroke).attr('stroke-width', 1.5);
 
             monthAxis.append('text')
                 .attr('x', mStart + mWidth / 2).attr('y', monthRowHeight / 2)
                 .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-                .style('font-size', '11px').style('font-weight', '600').style('fill', axisText)
+                .style('font-size', '11px').style('font-weight', '700').style('fill', axisText)
                 .text(d3.timeFormat('%B %Y')(m));
         });
 
@@ -732,11 +749,6 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
             .attr('class', 'x-axis x-axis-weeks')
             .attr('transform', `translate(0,${axisY})`);
 
-        weekAxisG.append('line')
-            .attr('x1', 0).attr('x2', width)
-            .attr('y1', 0).attr('y2', 0)
-            .style('stroke', axisStroke);
-
         // If the project doesn't start on a Monday the first (partial) week is W0.
         const startsOnMonday = minDate.getDay() === 1;
 
@@ -745,16 +757,32 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
             const nextIdx = idx + 1 < weekGroups.length ? weekGroups[idx + 1].startIdx : slotList.length;
             const x2 = nextIdx * dayWidth;
 
+            const bandFill = idx % 2 === 0 ? weekBandEven : weekBandOdd;
+            weekAxisG.append('rect')
+                .attr('x', x1).attr('y', 0)
+                .attr('width', x2 - x1).attr('height', weekRowHeight)
+                .attr('fill', bandFill);
             weekAxisG.append('line')
-                .attr('x1', x1).attr('x2', x1).attr('y1', 0).attr('y2', 5)
-                .style('stroke', axisStroke);
+                .attr('x1', x1).attr('x2', x1)
+                .attr('y1', 0).attr('y2', weekRowHeight)
+                .style('stroke', axisStroke).style('stroke-width', 1.5);
 
             const label = (!startsOnMonday && idx === 0) ? 'W0' : `W${startsOnMonday ? idx + 1 : idx}`;
             weekAxisG.append('text')
-                .attr('x', (x1 + x2) / 2).attr('y', 17).attr('text-anchor', 'middle')
-                .style('font-size', '11px').style('fill', axisText)
+                .attr('x', (x1 + x2) / 2).attr('y', weekRowHeight / 2)
+                .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+                .style('font-size', '11px').style('font-weight', '600').style('fill', axisText)
                 .text(label);
         });
+        // Closing right border + bottom border
+        weekAxisG.append('line')
+            .attr('x1', width).attr('x2', width)
+            .attr('y1', 0).attr('y2', weekRowHeight)
+            .style('stroke', axisStroke).style('stroke-width', 1.5);
+        weekAxisG.append('line')
+            .attr('x1', 0).attr('x2', width)
+            .attr('y1', weekRowHeight).attr('y2', weekRowHeight)
+            .style('stroke', axisStroke).style('stroke-width', 1.5);
 
         // Month row: group weekday slots by month
         const monthGroups = [];
@@ -779,14 +807,14 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
 
             monthAxisG.append('rect')
                 .attr('x', x1).attr('y', 0)
-                .attr('width', mWidth).attr('height', monthRowHeight - 2)
-                .attr('fill', 'none')
-                .attr('stroke', axisStroke).attr('stroke-width', 0.5);
+                .attr('width', mWidth).attr('height', monthRowHeight)
+                .attr('fill', accentSubtle)
+                .attr('stroke', axisStroke).attr('stroke-width', 1.5);
 
             monthAxisG.append('text')
                 .attr('x', x1 + mWidth / 2).attr('y', monthRowHeight / 2)
                 .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-                .style('font-size', '11px').style('font-weight', '600').style('fill', axisText)
+                .style('font-size', '11px').style('font-weight', '700').style('fill', axisText)
                 .text(d3.timeFormat('%B %Y')(mg.date));
         });
     }
