@@ -52,6 +52,10 @@
     /* Form sidebar */
     --form-bg:            #e6e5ea;
     --form-border:        #cccbd2;
+    --form-input-bg:      #ffffff;
+    --form-input-border:  #c6dcec;
+    --form-card-bg:       #ffffff;
+    --form-card-border:   #c6dcec;
     --bg-form-item:       #e6e5ea;
     --bg-form-item-border:#cccbd2;
 }
