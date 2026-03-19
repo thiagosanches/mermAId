@@ -492,21 +492,27 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
     // hideWeekends = !showWeekends — when weekends are NOT shown we build a band scale
     const hideWeekends = !showWeekends;
 
-    // When hiding weekends we build a band scale over working days only
+    // When hiding weekends we build a band scale over weekdays only (working days + holidays).
+    // Each weekday gets one slot; holidays are rendered as coloured stripes, working days as bars.
     let xScale;
-    let workingDaysList; // used only in hideWeekends mode
+    let workingDaysList;   // true working days (no holidays) — used for bar widths & axis grouping
+    let weekdaySlotList;   // all weekdays including holidays — defines the pixel band
     if (hideWeekends) {
-        workingDaysList = allDays.filter(d => !isWeekend(d) && !isHoliday(dateToString(d)));
-        const dayWidth = totalWidth / workingDaysList.length;
-        // Map each working-day date → its pixel x position
-        const dayIndex = new Map(workingDaysList.map((d, i) => [dateToString(d), i * dayWidth]));
-        // xScale accepts a Date and returns the pixel x of that day
+        // All weekdays in range (Mon–Fri), regardless of holiday status
+        weekdaySlotList = allDays.filter(d => !isWeekend(d));
+        // Subset that are actual working days (used for bar math and axis week/month grouping)
+        workingDaysList = weekdaySlotList.filter(d => !isHoliday(dateToString(d)));
+
+        const dayWidth = totalWidth / weekdaySlotList.length;
+        // Map every weekday date → its pixel x position (holidays included)
+        const dayIndex = new Map(weekdaySlotList.map((d, i) => [dateToString(d), i * dayWidth]));
+
         xScale = (date) => {
             const ds = dateToString(date);
             if (dayIndex.has(ds)) return dayIndex.get(ds);
-            // For end-of-bar dates find the next working day's position + dayWidth
+            // For dates outside the map (weekends, or past end) walk forward to next weekday slot
             let d = new Date(date);
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 14; i++) {
                 d.setDate(d.getDate() + 1);
                 const s = dateToString(d);
                 if (dayIndex.has(s)) return dayIndex.get(s);
@@ -516,6 +522,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
         xScale.dayWidth = dayWidth;
         xScale.isCustom = true;
         xScale.workingDaysList = workingDaysList;
+        xScale.weekdaySlotList = weekdaySlotList;
     } else {
         xScale = d3.scaleTime().domain([minDate, maxDate]).range([0, totalWidth]);
         xScale.isCustom = false;
@@ -550,8 +557,8 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
             .attr('transform', `translate(0,${activities.length * 60})`)
             .call(d3.axisBottom(xScale).ticks(d3.timeDay.every(1)).tickSize(-activities.length * 60).tickFormat(''));
     } else {
-        // Draw vertical grid lines manually for each working day
-        workingDaysList.forEach(d => {
+        // Draw vertical grid lines for every weekday slot (working days + holidays)
+        xScale.weekdaySlotList.forEach(d => {
             svg.append('line')
                 .attr('x1', xScale(d)).attr('x2', xScale(d))
                 .attr('y1', 0).attr('y2', activities.length * 60)
@@ -597,31 +604,18 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
             }
         });
     } else {
-        // Hide-weekends mode: holidays are excluded from workingDaysList, so the band scale
-        // has no slot for them. We insert a visual stripe between the last working day before
-        // the holiday and the first working day after it.
+        // Hide-weekends mode: holidays now have their own slot in the band scale,
+        // so xScale(hDate) returns the correct pixel position directly.
         const dayWidth = xScale.dayWidth;
-        const wdList = xScale.workingDaysList;
 
-        const allWeekdayHolidays = allDays.filter(d => !isWeekend(d) && isHoliday(dateToString(d)));
-
-        allWeekdayHolidays.forEach(hDate => {
+        allDays.filter(d => !isWeekend(d) && isHoliday(dateToString(d))).forEach(hDate => {
             const hDs = dateToString(hDate);
             const holiday = holidays.find(h => h.date === hDs);
-
-            // Find the index of the last working day strictly before this holiday
-            let prevWdIdx = -1;
-            for (let i = wdList.length - 1; i >= 0; i--) {
-                if (wdList[i] < hDate) { prevWdIdx = i; break; }
-            }
-
-            // x position: right after the previous working day's slot (or at 0 if it's first)
-            const x = prevWdIdx >= 0 ? (prevWdIdx + 1) * dayWidth : 0;
+            const x = xScale(hDate);
 
             svg.append('rect')
                 .attr('x', x).attr('y', 0)
-                .attr('width', Math.min(dayWidth, width - x))
-                .attr('height', activities.length * 60)
+                .attr('width', dayWidth).attr('height', activities.length * 60)
                 .attr('fill', holidayFill).attr('opacity', 0.85);
             svg.append('text')
                 .attr('x', x + dayWidth / 2).attr('y', -10)
@@ -693,13 +687,15 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
 
     } else {
         // --- Hide-weekends (compressed) mode ---
-        const wdList = xScale.workingDaysList;
+        // Use weekdaySlotList (Mon–Fri including holidays) for pixel positions,
+        // so holiday slots are properly accounted for in week/month spans.
+        const slotList = xScale.weekdaySlotList;
         const dayWidth = xScale.dayWidth;
 
-        // Week row: group consecutive working days by ISO week
+        // Week row: group consecutive weekday slots by ISO week
         const weekGroups = [];
         let curWeek = null;
-        wdList.forEach((d, i) => {
+        slotList.forEach((d, i) => {
             const wk = d3.timeFormat('%Y-W%V')(d);
             if (wk !== curWeek) {
                 weekGroups.push({ key: wk, date: d, startIdx: i });
@@ -718,7 +714,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
 
         weekGroups.forEach((wg, idx) => {
             const x1 = wg.startIdx * dayWidth;
-            const nextIdx = idx + 1 < weekGroups.length ? weekGroups[idx + 1].startIdx : wdList.length;
+            const nextIdx = idx + 1 < weekGroups.length ? weekGroups[idx + 1].startIdx : slotList.length;
             const x2 = nextIdx * dayWidth;
 
             weekAxisG.append('line')
@@ -731,10 +727,10 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
                 .text(`W${idx + 1}`);
         });
 
-        // Month row: group working days by month
+        // Month row: group weekday slots by month
         const monthGroups = [];
         let curMonth = null;
-        wdList.forEach((d, i) => {
+        slotList.forEach((d, i) => {
             const mk = d3.timeFormat('%Y-%m')(d);
             if (mk !== curMonth) {
                 monthGroups.push({ key: mk, date: d, startIdx: i });
@@ -748,7 +744,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
 
         monthGroups.forEach((mg, idx) => {
             const x1 = mg.startIdx * dayWidth;
-            const nextIdx = idx + 1 < monthGroups.length ? monthGroups[idx + 1].startIdx : wdList.length;
+            const nextIdx = idx + 1 < monthGroups.length ? monthGroups[idx + 1].startIdx : slotList.length;
             const x2 = nextIdx * dayWidth;
             const mWidth = x2 - x1;
 
