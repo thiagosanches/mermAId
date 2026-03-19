@@ -88,14 +88,14 @@ body.dark {
     --accent-subtle:      #031422;
 
     /* Chart helpers */
-    --grid-line:          #0f3050;
-    --axis-stroke:        #133d5c;
-    --axis-text:          #7dbce8;
-    --weekend-bg:         #040f1a;
-    --weekend-text:       #1e5a80;
-    --holiday-bg:         #1a0808;
+    --grid-line:          #2a3f52;
+    --axis-stroke:        #3a5568;
+    --axis-text:          #c8dff0;
+    --weekend-bg:         #0a1e2e;
+    --weekend-text:       #4a7fa8;
+    --holiday-bg:         #2a0a0a;
     --week-band-odd:      transparent;
-    --week-band-even:     #040f1a;
+    --week-band-even:     #0d2035;
 
     /* Elevation */
     --shadow-sm:          0 1px 4px rgba(0,0,0,0.45);
