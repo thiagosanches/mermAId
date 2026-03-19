@@ -274,15 +274,15 @@ header p {
     background: var(--form-input-bg);
 }
 
-/* Secondary buttons — light ghost on dark background */
+/* Secondary buttons — white on dark background */
 .form-section .btn-secondary {
-    background: transparent;
-    color: var(--form-text-secondary);
-    border-color: var(--form-input-border);
+    background: #ffffff;
+    color: var(--text-secondary);
+    border-color: #c6dcec;
 }
 
 .form-section .btn-secondary:hover {
-    background: rgba(0,149,255,0.1);
+    background: #ffffff;
     border-color: var(--accent);
     color: var(--accent);
 }
@@ -290,7 +290,7 @@ header p {
 /* Primary button — bright accent on dark bg */
 .form-section .btn-primary {
     background: var(--accent);
-    color: #e8f4fd;
+    color: #ffffff;
 }
 
 .form-section .btn-primary:hover {
