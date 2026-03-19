@@ -142,10 +142,8 @@ function initPanelToggle() {
         btn.innerHTML = hidden ? '&#8250;' : '&#8249;';
         btn.title = hidden ? 'Show panel' : 'Hide panel';
         localStorage.setItem('ez-gantt-panel-hidden', hidden);
-        // Re-render chart so it fills the new width
-            // Wait for the CSS transition to finish (300ms) then re-render
-            setTimeout(() => generateTimeline(), 320);
-        }
+        // Wait for the CSS transition to finish (300ms) then re-render
+        setTimeout(() => generateTimeline(), 320);
     });
 }
 
