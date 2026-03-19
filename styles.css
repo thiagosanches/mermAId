@@ -149,6 +149,16 @@ header p {
     grid-template-columns: 0px 1fr;
 }
 
+.content.panel-hidden .form-section {
+    overflow: hidden;
+    padding: 0;
+    border-right: none;
+}
+
+.content.panel-hidden .preview-section {
+    padding-left: 28px;
+}
+
 @media (max-width: 1024px) {
     .content {
         grid-template-columns: 1fr;
