@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDarkMode();
     initFteHints();
     attachAutosaveListeners();
+    initPanelToggle();
 
     document.getElementById('showWeekends').addEventListener('change', (e) => {
         showWeekends = e.target.checked;
@@ -118,6 +119,31 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
     localStorage.setItem('ez-gantt-dark', document.body.classList.contains('dark'));
     updateDarkModeIcon();
 });
+
+// ---------------------------------------------------------------------------
+// Panel toggle (show/hide left form panel)
+// ---------------------------------------------------------------------------
+function initPanelToggle() {
+    const content = document.querySelector('.content');
+    const btn = document.getElementById('togglePanel');
+    const panelHidden = localStorage.getItem('ez-gantt-panel-hidden') === 'true';
+    if (panelHidden) {
+        content.classList.add('panel-hidden');
+        btn.innerHTML = '&#8250;';
+        btn.title = 'Show panel';
+    }
+    btn.addEventListener('click', () => {
+        const hidden = content.classList.toggle('panel-hidden');
+        btn.innerHTML = hidden ? '&#8250;' : '&#8249;';
+        btn.title = hidden ? 'Show panel' : 'Hide panel';
+        localStorage.setItem('ez-gantt-panel-hidden', hidden);
+        // Re-render chart so it fills the new width
+        if (ganttChart) {
+            // Wait for the CSS transition to finish (300ms) then re-render
+            setTimeout(() => document.getElementById('generateTimeline').click(), 320);
+        }
+    });
+}
 
 // ---------------------------------------------------------------------------
 // Holidays
