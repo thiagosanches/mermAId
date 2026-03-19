@@ -615,7 +615,7 @@ body.dark .remove-activity:hover {
     box-shadow: var(--shadow-sm);
 }
 
-#ganttChart svg { max-width: 100%; }
+#ganttChart svg { display: block; margin: 0 auto; }
 
 .grid line {
     stroke: var(--grid-line);

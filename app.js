@@ -551,7 +551,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
 
     // Extra top margin for the two-row axis header (week row + month row)
     const margin = { top: 60, right: 40, bottom: 80, left: 200 };
-    const totalWidth = container.clientWidth - margin.left - margin.right;
+    const containerWidth = container.clientWidth - margin.left - margin.right;
     const height = Math.max(400, activities.length * 60 + 100);
 
     // Build the ordered list of days in the project range, optionally skipping weekends
@@ -562,6 +562,13 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
 
     // hideWeekends = !showWeekends — when weekends are NOT shown we build a band scale
     const hideWeekends = !showWeekends;
+
+    // Natural width: give each visible day at least 28px so short projects don't get squashed,
+    // but always fill the container when there are many days.
+    const visibleDayCount = hideWeekends
+        ? allDays.filter(d => !isWeekend(d)).length
+        : allDays.length;
+    const totalWidth = Math.max(visibleDayCount * 28, containerWidth);
 
     // When hiding weekends we build a band scale over weekdays only (working days + holidays).
     // Each weekday gets one slot; holidays are rendered as coloured stripes, working days as bars.
@@ -605,6 +612,8 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
         .append('svg')
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
+        .style('display', 'block')
+        .style('margin', '0 auto')
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
