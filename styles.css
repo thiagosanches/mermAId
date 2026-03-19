@@ -55,10 +55,10 @@
     --form-text-primary:  #e8f4fd;
     --form-text-secondary:#7dbce8;
     --form-text-muted:    #4a7fa8;
-    --form-input-bg:      #1c3244;
-    --form-input-border:  #2a4558;
-    --form-card-bg:       #1c3244;
-    --form-card-border:   #2a4558;
+    --form-input-bg:      #f0f7fd;
+    --form-input-border:  #c6dcec;
+    --form-card-bg:       #f0f7fd;
+    --form-card-border:   #c6dcec;
     --form-divider:       #1a3a50;
     --form-accent-subtle: #051e30;
 
@@ -257,7 +257,7 @@ header p {
 .form-section select {
     background: var(--form-input-bg);
     border-color: var(--form-input-border);
-    color: var(--form-text-primary);
+    color: var(--text-primary);
 }
 
 .form-section input[type="text"]:focus,
@@ -306,6 +306,14 @@ header p {
 
 .form-section .activity-item:hover {
     border-color: var(--accent);
+}
+
+/* In dark mode, inputs inside cards go back to light text */
+body.dark .form-section input[type="text"],
+body.dark .form-section input[type="date"],
+body.dark .form-section input[type="number"],
+body.dark .form-section select {
+    color: var(--form-text-primary);
 }
 
 /* Remove activity button */
