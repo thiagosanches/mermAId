@@ -49,22 +49,22 @@
     --header-text:        #e8f4fd;
     --header-subtext:     #7dbce8;
 
-    /* Form sidebar — dark panel in light mode */
-    --form-bg:            #0d2e4a;
-    --form-border:        #1a4d6e;
-    --form-text-primary:  #e8f4fd;
-    --form-text-secondary:#7dbce8;
-    --form-text-muted:    #4a8aad;
-    --form-input-bg:      #082338;
-    --form-input-border:  #1a4d6e;
-    --form-card-bg:       #0a2540;
-    --form-card-border:   #1a4d6e;
-    --form-divider:       #1a4d6e;
-    --form-accent-subtle: #051c2e;
+    /* Form sidebar */
+    --form-bg:            #515b62;
+    --form-border:        #3a4349;
+    --form-text-primary:  #f0f4f6;
+    --form-text-secondary:#b8c8d0;
+    --form-text-muted:    #7a9aaa;
+    --form-input-bg:      #424b52;
+    --form-input-border:  #3a4349;
+    --form-card-bg:       #424b52;
+    --form-card-border:   #3a4349;
+    --form-divider:       #3a4349;
+    --form-accent-subtle: #3a4349;
 
     /* Legacy alias so .bg-form-item-border still works for toggle btn */
-    --bg-form-item:       #0d2e4a;
-    --bg-form-item-border:#1a4d6e;
+    --bg-form-item:       #515b62;
+    --bg-form-item-border:#3a4349;
 }
 
 /* -----------------------------------------------------------------------
@@ -105,21 +105,21 @@ body.dark {
     --header-text:        #e8f4fd;
     --header-subtext:     #4a7fa8;
 
-    /* Form sidebar — even deeper in dark mode */
-    --form-bg:            #020b11;
-    --form-border:        #0e2e47;
-    --form-text-primary:  #e8f4fd;
-    --form-text-secondary:#7dbce8;
-    --form-text-muted:    #3d7090;
-    --form-input-bg:      #061724;
-    --form-input-border:  #0e2e47;
-    --form-card-bg:       #040f1a;
-    --form-card-border:   #0e2e47;
-    --form-divider:       #0e2e47;
-    --form-accent-subtle: #030d14;
+    /* Form sidebar — darker in dark mode */
+    --form-bg:            #2e3538;
+    --form-border:        #232a2d;
+    --form-text-primary:  #f0f4f6;
+    --form-text-secondary:#b8c8d0;
+    --form-text-muted:    #607880;
+    --form-input-bg:      #252d31;
+    --form-input-border:  #232a2d;
+    --form-card-bg:       #252d31;
+    --form-card-border:   #232a2d;
+    --form-divider:       #232a2d;
+    --form-accent-subtle: #1e2528;
 
-    --bg-form-item:       #020b11;
-    --bg-form-item-border:#0e2e47;
+    --bg-form-item:       #2e3538;
+    --bg-form-item-border:#232a2d;
 }
 
 /* -----------------------------------------------------------------------
