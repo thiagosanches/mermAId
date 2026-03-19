@@ -142,6 +142,7 @@ header p {
     height: calc(100vh - 72px);
     overflow: hidden;
     transition: grid-template-columns 0.3s ease;
+    position: relative;
 }
 
 .content.panel-hidden {
@@ -170,24 +171,24 @@ header p {
     border-right: 1px solid var(--bg-form-item-border);
     background: var(--bg-form-item);
     transition: background 0.3s, border-color 0.3s;
-    position: relative;
     min-width: 0;
 }
 
 /* -----------------------------------------------------------------------
-   Panel toggle button — sits on the right edge of the form panel
+   Panel toggle button — pinned to the column boundary inside .content
    ----------------------------------------------------------------------- */
+
 .toggle-panel-btn {
     position: absolute;
     top: 50%;
-    right: -14px;
-    transform: translateY(-50%);
+    left: 380px;
+    transform: translate(-50%, -50%);
     z-index: 10;
     width: 20px;
     height: 48px;
     padding: 0;
     border: 1px solid var(--bg-form-item-border);
-    border-radius: 0 6px 6px 0;
+    border-radius: 6px;
     background: var(--bg-form-item);
     color: var(--text-muted);
     font-size: 1.1em;
@@ -196,8 +197,8 @@ header p {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-    box-shadow: 2px 0 6px rgba(15,23,42,0.08);
+    transition: background 0.15s, color 0.15s, border-color 0.15s, left 0.3s ease;
+    box-shadow: var(--shadow-sm);
 }
 
 .toggle-panel-btn:hover {
@@ -207,8 +208,7 @@ header p {
 }
 
 .content.panel-hidden .toggle-panel-btn {
-    right: -20px;
-    border-radius: 0 6px 6px 0;
+    left: 0px;
 }
 
 .preview-section {
