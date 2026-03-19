@@ -1,80 +1,96 @@
 /* -----------------------------------------------------------------------
+   Google Fonts — Instrument Sans (display) + Source Sans 3 (body)
+   ----------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+/* -----------------------------------------------------------------------
    Design tokens — light theme
-   Palette: Slate neutrals + Indigo accent
+   Palette: #0095ff, #082b45, #0967aa, #7dbce8, #c6dcec
    ----------------------------------------------------------------------- */
 :root {
     /* Surfaces */
-    --bg-body:            #F1F5F9;
-    --bg-container:       #FFFFFF;
-    --bg-form-item:       #F8FAFC;
-    --bg-form-item-border:#E2E8F0;
-    --bg-chart:           #FFFFFF;
-    --bg-input:           #FFFFFF;
+    --bg-body:            #edf4fb;
+    --bg-container:       #ffffff;
+    --bg-form-item:       #f4f9fd;
+    --bg-form-item-border:#c6dcec;
+    --bg-chart:           #ffffff;
+    --bg-input:           #ffffff;
 
     /* Text */
-    --text-primary:       #0F172A;
-    --text-secondary:     #475569;
-    --text-muted:         #94A3B8;
+    --text-primary:       #082b45;
+    --text-secondary:     #0967aa;
+    --text-muted:         #5a90b8;
 
     /* Borders & focus */
-    --border-input:       #CBD5E1;
-    --border-input-focus: #4F46E5;
+    --border-input:       #b0d0e8;
+    --border-input-focus: #0095ff;
 
-    /* Accent — Indigo 600 */
-    --accent:             #4F46E5;
-    --accent-hover:       #4338CA;
-    --accent-subtle:      #EEF2FF;
+    /* Accent — Brand Blue */
+    --accent:             #0095ff;
+    --accent-hover:       #0067cc;
+    --accent-subtle:      #dceffe;
 
     /* Chart helpers */
-    --grid-line:          #E2E8F0;
-    --axis-stroke:        #CBD5E1;
-    --axis-text:          #64748B;
-    --weekend-bg:         #F1F5F9;
-    --weekend-text:       #94A3B8;
-    --holiday-bg:         #FEF2F2;
+    --grid-line:          #c6dcec;
+    --axis-stroke:        #b0d0e8;
+    --axis-text:          #0967aa;
+    --weekend-bg:         #f4f9fd;
+    --weekend-text:       #7dbce8;
+    --holiday-bg:         #fff0f0;
     --week-band-odd:      transparent;
-    --week-band-even:     #EEF2FF;
+    --week-band-even:     #edf6ff;
 
     /* Elevation */
-    --shadow-sm:          0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04);
-    --shadow-md:          0 4px 16px rgba(15,23,42,0.10), 0 2px 6px rgba(15,23,42,0.06);
+    --shadow-sm:          0 1px 3px rgba(8,43,69,0.08), 0 1px 2px rgba(8,43,69,0.04);
+    --shadow-md:          0 4px 16px rgba(8,43,69,0.10), 0 2px 6px rgba(8,43,69,0.06);
     --shadow:             var(--shadow-md);
+
+    /* Header */
+    --header-bg:          #082b45;
+    --header-border:      #051c2e;
+    --header-text:        #e8f4fd;
+    --header-subtext:     #7dbce8;
 }
 
 /* -----------------------------------------------------------------------
-   Dark theme tokens
+   Dark theme tokens — deep navy base, strong contrast
    ----------------------------------------------------------------------- */
 body.dark {
-    --bg-body:            #0F172A;
-    --bg-container:       #1E293B;
-    --bg-form-item:       #243044;
-    --bg-form-item-border:#334155;
-    --bg-chart:           #1E293B;
-    --bg-input:           #243044;
+    --bg-body:            #030d14;
+    --bg-container:       #061724;
+    --bg-form-item:       #0a2135;
+    --bg-form-item-border:#133352;
+    --bg-chart:           #061724;
+    --bg-input:           #0d2a42;
 
-    --text-primary:       #F1F5F9;
-    --text-secondary:     #94A3B8;
-    --text-muted:         #475569;
+    --text-primary:       #e8f4fd;
+    --text-secondary:     #7dbce8;
+    --text-muted:         #4a7fa8;
 
-    --border-input:       #334155;
-    --border-input-focus: #818CF8;
+    --border-input:       #1a4468;
+    --border-input-focus: #0095ff;
 
-    --accent:             #818CF8;
-    --accent-hover:       #6366F1;
-    --accent-subtle:      #1E1B4B;
+    --accent:             #0095ff;
+    --accent-hover:       #29aaff;
+    --accent-subtle:      #051c2e;
 
-    --grid-line:          #334155;
-    --axis-stroke:        #475569;
-    --axis-text:          #64748B;
-    --weekend-bg:         #1E293B;
-    --weekend-text:       #475569;
-    --holiday-bg:         #2D1515;
+    --grid-line:          #133352;
+    --axis-stroke:        #1a4468;
+    --axis-text:          #7dbce8;
+    --weekend-bg:         #06192a;
+    --weekend-text:       #2d6a9a;
+    --holiday-bg:         #200a0a;
     --week-band-odd:      transparent;
-    --week-band-even:     #1E1B4B;
+    --week-band-even:     #071e31;
 
-    --shadow-sm:          0 1px 3px rgba(0,0,0,0.3);
-    --shadow-md:          0 4px 16px rgba(0,0,0,0.4);
+    --shadow-sm:          0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md:          0 4px 16px rgba(0,0,0,0.5);
     --shadow:             var(--shadow-md);
+
+    --header-bg:          #030d14;
+    --header-border:      #0a2135;
+    --header-text:        #e8f4fd;
+    --header-subtext:     #4a7fa8;
 }
 
 /* -----------------------------------------------------------------------
@@ -83,7 +99,7 @@ body.dark {
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-body);
     min-height: 100vh;
     padding: 20px;
@@ -105,15 +121,11 @@ body {
 }
 
 header {
-    background: #1E293B;
-    color: #F8FAFC;
+    background: var(--header-bg);
+    color: var(--header-text);
     padding: 16px 24px;
-    border-bottom: 1px solid #0F172A;
-}
-
-body.dark header {
-    background: #0F172A;
-    border-bottom-color: #334155;
+    border-bottom: 1px solid var(--header-border);
+    transition: background 0.3s, border-color 0.3s;
 }
 
 .header-content {
@@ -123,15 +135,16 @@ body.dark header {
 }
 
 header h1 {
+    font-family: 'Instrument Sans', sans-serif;
     font-size: 1.25em;
     font-weight: 700;
     letter-spacing: -0.01em;
-    color: #F8FAFC;
+    color: var(--header-text);
 }
 
 header p {
     font-size: 0.8em;
-    color: #94A3B8;
+    color: var(--header-subtext);
     margin-top: 2px;
 }
 
@@ -234,14 +247,14 @@ header p {
    Typography
    ----------------------------------------------------------------------- */
 h2 {
-    color: var(--text-primary);
+    font-family: 'Instrument Sans', sans-serif;
+    color: var(--text-muted);
     font-size: 0.78em;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     border-bottom: none;
     padding-bottom: 0;
-    color: var(--text-muted);
 }
 
 h3 { color: var(--text-secondary); font-size: 1.0em; margin-top: 4px; }
@@ -256,6 +269,7 @@ h3 { color: var(--text-secondary); font-size: 1.0em; margin-top: 4px; }
 }
 
 label {
+    font-family: 'Instrument Sans', sans-serif;
     font-weight: 600;
     color: var(--text-muted);
     font-size: 0.75em;
@@ -271,6 +285,7 @@ select {
     border: 1px solid var(--border-input);
     border-radius: 6px;
     font-size: 0.875em;
+    font-family: 'Source Sans 3', sans-serif;
     background: var(--bg-input);
     color: var(--text-primary);
     transition: border-color 0.15s, box-shadow 0.15s, background 0.3s;
@@ -282,7 +297,7 @@ input[type="number"]:focus,
 select:focus {
     outline: none;
     border-color: var(--border-input-focus);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 /* -----------------------------------------------------------------------
@@ -417,17 +432,18 @@ select:focus {
     align-items: center;
     gap: 5px;
     background: var(--holiday-bg);
-    border: 1px solid #FECACA;
+    border: 1px solid #f5a5a5;
     border-radius: 20px;
     padding: 2px 8px 2px 10px;
     font-size: 0.78em;
-    color: #DC2626;
+    color: #c0392b;
     font-weight: 600;
 }
 
 body.dark .holiday-tag {
-    border-color: #7F1D1D;
-    color: #FCA5A5;
+    background: #200a0a;
+    border-color: #5a1515;
+    color: #f08080;
 }
 
 .holiday-tag button {
@@ -462,10 +478,11 @@ body.dark .holiday-tag {
     padding: 6px 14px;
     border: none;
     border-radius: 6px;
+    font-family: 'Instrument Sans', sans-serif;
     font-size: 0.82em;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+    transition: background 0.15s, box-shadow 0.15s, transform 0.1s, border-color 0.15s;
     text-align: center;
     display: inline-block;
     letter-spacing: 0.01em;
@@ -477,9 +494,9 @@ body.dark .holiday-tag {
 
 /* Dark mode toggle in header */
 .btn-icon {
-    background: rgba(255,255,255,0.08);
-    color: #94A3B8;
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(125,188,232,0.12);
+    color: #7dbce8;
+    border: 1px solid rgba(125,188,232,0.2);
     border-radius: 8px;
     width: 34px;
     height: 34px;
@@ -492,29 +509,30 @@ body.dark .holiday-tag {
 }
 
 .btn-icon:hover {
-    background: rgba(255,255,255,0.16);
-    color: #F1F5F9;
+    background: rgba(125,188,232,0.22);
+    color: #c6dcec;
+    border-color: rgba(125,188,232,0.35);
 }
 
-/* Primary — dark slate, reads as "execute/run" */
+/* Primary — deep navy, reads as "execute/run" */
 .btn-primary {
-    background: #1E293B;
-    color: #F8FAFC;
+    background: #082b45;
+    color: #e8f4fd;
 }
 
 .btn-primary:hover {
-    background: #0F172A;
-    box-shadow: 0 2px 8px rgba(15,23,42,0.3);
+    background: #0967aa;
+    box-shadow: 0 2px 8px rgba(9,103,170,0.35);
 }
 
 body.dark .btn-primary {
-    background: #F1F5F9;
-    color: #0F172A;
+    background: #0095ff;
+    color: #e8f4fd;
 }
 
 body.dark .btn-primary:hover {
-    background: #E2E8F0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    background: #29aaff;
+    box-shadow: 0 2px 8px rgba(0,149,255,0.4);
 }
 
 /* Secondary — ghost style */
@@ -525,9 +543,20 @@ body.dark .btn-primary:hover {
 }
 
 .btn-secondary:hover {
-    background: var(--bg-form-item);
-    border-color: var(--text-secondary);
-    color: var(--text-primary);
+    background: var(--accent-subtle);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+body.dark .btn-secondary {
+    color: #7dbce8;
+    border-color: #1a4468;
+}
+
+body.dark .btn-secondary:hover {
+    background: #051c2e;
+    border-color: #0095ff;
+    color: #0095ff;
 }
 
 /* Remove activity — ghost danger */
@@ -546,12 +575,13 @@ body.dark .btn-primary:hover {
 }
 
 .remove-activity:hover {
-    color: #DC2626;
-    background: #FEF2F2;
+    color: #c0392b;
+    background: #fff0f0;
 }
 
 body.dark .remove-activity:hover {
-    background: #2D1515;
+    color: #f08080;
+    background: #200a0a;
 }
 
 .project-actions {
@@ -669,6 +699,10 @@ body.dark .remove-activity:hover {
     font-size: 0.9em;
 }
 
+body.dark .instructions li {
+    color: #7dbce8;
+}
+
 .instructions li::before {
     content: "→";
     position: absolute;
@@ -688,6 +722,7 @@ body.dark .remove-activity:hover {
 
 /* Divider label above activities list */
 .section-label {
+    font-family: 'Instrument Sans', sans-serif;
     font-size: 0.72em;
     font-weight: 700;
     letter-spacing: 0.08em;
