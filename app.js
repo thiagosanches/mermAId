@@ -782,12 +782,19 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
                     x2: mondayWeeks.length > 0 ? xScale(mondayWeeks[0]) : width,
                     label: 'W0',
                 });
+            } else {
+                // Project starts on a Monday — first full week is W1, starting at minDate
+                weekSegments.push({
+                    x1: xScale(minDate),
+                    x2: mondayWeeks.length > 0 ? xScale(mondayWeeks[0]) : width,
+                    label: 'W1',
+                });
             }
             mondayWeeks.forEach((w, idx) => {
                 weekSegments.push({
                     x1: xScale(w),
                     x2: idx + 1 < mondayWeeks.length ? xScale(mondayWeeks[idx + 1]) : width,
-                    label: `W${idx + 1}`,
+                    label: `W${idx + (startsOnMonday ? 2 : 1)}`,
                 });
             });
 
