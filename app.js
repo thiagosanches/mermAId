@@ -1266,6 +1266,27 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;');
 }
 
+function resetProject() {
+    if (!confirm('Start a new project? All unsaved changes will be lost.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    restoreProjectData({
+        projectName: 'My Project',
+        projectStart: '',
+        showWeekends: false,
+        showWeeks: true,
+        showMonths: true,
+        showDays: true,
+        holidays: [],
+        activities: [
+            { id: 0, name: '', color: '#4F46E5', workdays: 5, fte: 1, dependency: '', customStart: '' }
+        ]
+    }, false);
+    document.getElementById('ganttChart').innerHTML = '';
+    document.getElementById('exportPng').style.display = 'none';
+    document.getElementById('generateTimeline').style.display = 'none';
+}
+
+document.getElementById('newProject').addEventListener('click', resetProject);
 document.getElementById('saveProject').addEventListener('click', saveProject);
 document.getElementById('loadProjectInput').addEventListener('change', (e) => {
     loadProject(e.target.files[0]);
