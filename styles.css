@@ -217,7 +217,7 @@ header p {
     
     /* Hide the toggle button on mobile since panel stacks vertically */
     .toggle-panel-btn {
-        display: none;
+        display: none !important;
     }
 }
 
