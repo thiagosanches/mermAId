@@ -98,19 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ganttChart) scheduleRender();
     });
 
-    // Restore from localStorage or set up defaults for first-time users
+    // Restore from localStorage (skip if nothing saved)
     const saved = loadFromLocalStorage();
     if (saved) {
         restoreProjectData(saved, /* autoGenerate */ true);
-    } else {
-        // First-time user: ensure the initial HTML activity has proper listeners
-        const firstActivity = document.querySelector('.activity-item');
-        if (firstActivity) {
-            attachMilestoneListeners(firstActivity);
-            updateFteHint(firstActivity);
-        }
-        // Auto-generate timeline with default values
-        scheduleRender();
     }
 });
 
