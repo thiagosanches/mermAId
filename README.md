@@ -2,6 +2,8 @@
 
 An interactive project management tool that helps Project Managers build Gantt chart timelines with automatic working day calculations, dependency management, and visual timeline rendering.
 
+https://thiagosanches.github.io/ez-gantt/
+
 ## Features
 
 - **Working Days Only**: Automatically calculates timelines using Monday-Friday only (weekends excluded)
