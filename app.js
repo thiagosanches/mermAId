@@ -1127,7 +1127,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
                 .attr('x', endX)
                 .attr('y', midY)
                 .attr('dominant-baseline', 'middle')
-                .style('font-size', '18px')
+                .style('font-size', '28px')
                 .style('pointer-events', 'none')
                 .text(d.milestoneEmoji || '🏁');
         }
