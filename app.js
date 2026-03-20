@@ -379,67 +379,33 @@ function updateDependencyDropdowns() {
 // Add / Remove activities
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-// Milestone emoji picker
+// Milestone character input
 // ---------------------------------------------------------------------------
-const MILESTONE_EMOJIS = [
-    '🏁','🎯','⭐','🚀','🔔','✅','🏆','💡','🔥','⚡',
-    '🎉','📌','🛡️','🔑','💎','🌟','🎖️','🏅','📅','🔖',
-    '🚩','⛳','🎗️','🌈','💥','🎁','🔮','🧩','🛠️','📣',
-];
-
-function buildMilestoneRowHTML(isMilestone = false, emoji = '🏁') {
-    const emojiBtns = MILESTONE_EMOJIS.map(e =>
-        `<button type="button" class="emoji-option${e === emoji ? ' selected' : ''}" data-emoji="${e}">${e}</button>`
-    ).join('');
+function buildMilestoneRowHTML(isMilestone = false, character = '⭐') {
     return `
         <div class="form-group milestone-row">
             <label class="milestone-toggle-label">
                 <input type="checkbox" class="activity-milestone"${isMilestone ? ' checked' : ''}> Milestone
             </label>
-            <button type="button" class="milestone-emoji-btn" title="Pick emoji">${emoji}</button>
-            <div class="emoji-picker" ${isMilestone ? '' : 'hidden'}>
-                ${emojiBtns}
-            </div>
+            <input type="text" class="milestone-character-input" value="${character}" maxlength="2" placeholder="⭐" ${isMilestone ? '' : 'style="display:none;"'}>
         </div>`;
 }
 
 function attachMilestoneListeners(item) {
     const checkbox = item.querySelector('.activity-milestone');
-    const emojiBtn = item.querySelector('.milestone-emoji-btn');
-    const picker   = item.querySelector('.emoji-picker');
+    const charInput = item.querySelector('.milestone-character-input');
 
     checkbox.addEventListener('change', () => {
-        picker.hidden = !checkbox.checked;
+        charInput.style.display = checkbox.checked ? '' : 'none';
         scheduleSave();
         scheduleRender();
     });
 
-    emojiBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        // close all other open pickers first
-        document.querySelectorAll('.emoji-picker:not([hidden])').forEach(p => {
-            if (p !== picker) p.hidden = true;
-        });
-        picker.hidden = !picker.hidden;
-    });
-
-    picker.addEventListener('click', (e) => {
-        const btn = e.target.closest('.emoji-option');
-        if (!btn) return;
-        const emoji = btn.dataset.emoji;
-        emojiBtn.textContent = emoji;
-        picker.querySelectorAll('.emoji-option').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        picker.hidden = true;
+    charInput.addEventListener('input', () => {
         scheduleSave();
         scheduleRender();
     });
 }
-
-// Close emoji pickers when clicking outside
-document.addEventListener('click', () => {
-    document.querySelectorAll('.emoji-picker:not([hidden])').forEach(p => p.hidden = true);
-});
 
 document.getElementById('addActivity').addEventListener('click', () => {
     const container = document.getElementById('activitiesContainer');
@@ -555,7 +521,7 @@ function generateTimeline() {
         const id = item.dataset.id;
         const calendarDays = calendarDaysFromFte(workingDays, fte);
         const milestone = item.querySelector('.activity-milestone').checked;
-        const milestoneEmoji = item.querySelector('.milestone-emoji-btn').textContent.trim();
+        const milestoneEmoji = item.querySelector('.milestone-character-input').value.trim() || '⭐';
 
         if (name && workingDays > 0) {
             activities.push({ id, name, workingDays, fte, calendarDays, color, dependsOn: dependsOn || null, customStart: customStart || null, milestone, milestoneEmoji, start: null, end: null });
@@ -1129,7 +1095,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
                 .attr('dominant-baseline', 'middle')
                 .style('font-size', '28px')
                 .style('pointer-events', 'none')
-                .text(d.milestoneEmoji || '🏁');
+                .text(d.milestoneEmoji || '⭐');
         }
     });
 
@@ -1250,7 +1216,7 @@ function collectProjectData() {
             customStart: item.querySelector('.activity-custom-start').value,
             color: item.querySelector('.activity-color').value,
             milestone: item.querySelector('.activity-milestone').checked,
-            milestoneEmoji: item.querySelector('.milestone-emoji-btn').textContent.trim(),
+            milestoneEmoji: item.querySelector('.milestone-character-input').value.trim() || '⭐',
         });
     });
 
