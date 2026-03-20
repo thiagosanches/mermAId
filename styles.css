@@ -214,6 +214,11 @@ header p {
     .content.panel-hidden {
         grid-template-columns: 1fr;
     }
+    
+    /* Hide the toggle button on mobile since panel stacks vertically */
+    .toggle-panel-btn {
+        display: none;
+    }
 }
 
 .form-section {
