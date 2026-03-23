@@ -1001,17 +1001,19 @@ body.dark .instructions li {
 }
 
 .milestone-inputs-row {
-    display: flex;
-    flex-direction: row;
+    display: flex !important;
+    flex-direction: row !important;
     gap: 8px;
     align-items: center;
     margin-top: 0;
 }
 
 .milestone-character-input {
-    width: 45px;
+    width: 50px !important;
+    max-width: 50px;
     flex-shrink: 0;
-    padding: 6px 9px;
+    flex-grow: 0;
+    padding: 4px 6px;
     border: 1px solid var(--border-input);
     border-radius: 6px;
     font-size: 1.2em;
@@ -1029,8 +1031,9 @@ body.dark .instructions li {
 }
 
 .milestone-date-input {
-    flex: 1;
-    min-width: 0;
+    flex: 1 1 auto;
+    min-width: 120px;
+    max-width: 100%;
     padding: 6px 9px;
     border: 1px solid var(--border-input);
     border-radius: 6px;
