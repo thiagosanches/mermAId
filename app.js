@@ -1121,27 +1121,32 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
         // Milestone emoji — rendered at the specified milestone date or after the bar's right edge
         if (d.milestone) {
             let milestoneX;
+            let shouldRenderMilestone = true;
+            
             if (d.milestoneDate) {
                 // Use the custom milestone date
                 const milestoneDate = d3ParseDate(d.milestoneDate);
                 if (milestoneDate >= xDomain[0] && milestoneDate <= xDomain[1]) {
                     milestoneX = xScale(milestoneDate) + oneDayWidth / 2;
                 } else {
-                    // Milestone date is out of visible range, skip rendering
-                    return;
+                    // Milestone date is out of visible range, skip rendering milestone
+                    shouldRenderMilestone = false;
                 }
             } else {
                 // Default: render after the bar's right edge
                 milestoneX = xScale(d3ParseDate(d.end)) + oneDayWidth + 4;
             }
-            const midY = yScale(i) + yScale.bandwidth() / 2;
-            barGroup.append('text')
-                .attr('x', milestoneX)
-                .attr('y', midY)
-                .attr('dominant-baseline', 'middle')
-                .style('font-size', '28px')
-                .style('pointer-events', 'none')
-                .text(d.milestoneEmoji || '⭐');
+            
+            if (shouldRenderMilestone) {
+                const midY = yScale(i) + yScale.bandwidth() / 2;
+                barGroup.append('text')
+                    .attr('x', milestoneX)
+                    .attr('y', midY)
+                    .attr('dominant-baseline', 'middle')
+                    .style('font-size', '28px')
+                    .style('pointer-events', 'none')
+                    .text(d.milestoneEmoji || '⭐');
+            }
         }
     });
 
