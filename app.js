@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const firstActivity = document.querySelector('.activity-item');
         if (firstActivity) {
             attachMilestoneListeners(firstActivity);
+            attachCustomLabelListeners(firstActivity);
             updateFteHint(firstActivity);
         }
         // Auto-generate timeline with default values
@@ -411,6 +412,16 @@ function buildMilestoneRowHTML(isMilestone = false, character = '⭐', milestone
         </div>`;
 }
 
+function buildCustomLabelRowHTML(hasCustomLabel = false, customLabel = '') {
+    return `
+        <div class="form-group custom-label-row">
+            <label class="custom-label-toggle-label">
+                <input type="checkbox" class="activity-custom-label-toggle"${hasCustomLabel ? ' checked' : ''}> Custom Label
+            </label>
+            <input type="text" class="custom-label-input" value="${customLabel}" placeholder="Enter custom label" ${hasCustomLabel ? '' : 'style="display:none;"'}>
+        </div>`;
+}
+
 function attachMilestoneListeners(item) {
     const checkbox = item.querySelector('.activity-milestone');
     const charInput = item.querySelector('.milestone-character-input');
@@ -434,6 +445,25 @@ function attachMilestoneListeners(item) {
     });
 
     dateInput.addEventListener('change', () => {
+        scheduleSave();
+        scheduleRender();
+    });
+}
+
+function attachCustomLabelListeners(item) {
+    const checkbox = item.querySelector('.activity-custom-label-toggle');
+    const labelInput = item.querySelector('.custom-label-input');
+
+    // Safety check: ensure all elements exist
+    if (!checkbox || !labelInput) return;
+
+    checkbox.addEventListener('change', () => {
+        labelInput.style.display = checkbox.checked ? '' : 'none';
+        scheduleSave();
+        scheduleRender();
+    });
+
+    labelInput.addEventListener('input', () => {
         scheduleSave();
         scheduleRender();
     });
@@ -477,6 +507,7 @@ document.getElementById('addActivity').addEventListener('click', () => {
             <input type="date" class="activity-custom-start">
         </div>
         ${buildMilestoneRowHTML()}
+        ${buildCustomLabelRowHTML()}
     `;
 
     container.appendChild(item);
@@ -490,6 +521,7 @@ document.getElementById('addActivity').addEventListener('click', () => {
     item.querySelector('.activity-fte').addEventListener('input', () => updateFteHint(item));
     updateFteHint(item);
     attachMilestoneListeners(item);
+    attachCustomLabelListeners(item);
     scheduleSave();
 });
 
@@ -555,9 +587,11 @@ function generateTimeline() {
         const milestone = item.querySelector('.activity-milestone').checked;
         const milestoneEmoji = item.querySelector('.milestone-character-input').value.trim() || '⭐';
         const milestoneDate = item.querySelector('.milestone-date-input').value;
+        const hasCustomLabel = item.querySelector('.activity-custom-label-toggle').checked;
+        const customLabel = item.querySelector('.custom-label-input').value.trim();
 
         if (name && workingDays > 0) {
-            activities.push({ id, name, workingDays, fte, calendarDays, color, dependsOn: dependsOn || null, customStart: customStart || null, milestone, milestoneEmoji, milestoneDate, start: null, end: null });
+            activities.push({ id, name, workingDays, fte, calendarDays, color, dependsOn: dependsOn || null, customStart: customStart || null, milestone, milestoneEmoji, milestoneDate, hasCustomLabel, customLabel, start: null, end: null });
         }
     });
 
@@ -1158,7 +1192,12 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
         .attr('dominant-baseline', 'middle')
         .style('font-size', '11px').style('fill', d => getContrastColor(d.color))
         .style('font-weight', 'bold').style('pointer-events', 'none')
-        .text(d => `${d.workingDays} wd × ${d.fte} FTE = ${d.calendarDays} days`);
+        .text(d => {
+            if (d.hasCustomLabel) {
+                return d.customLabel || '';
+            }
+            return `${d.workingDays} wd × ${d.fte} FTE = ${d.calendarDays} days`;
+        });
 
     bars.append('text')
         .attr('x', d => xScale(d3ParseDate(d.start)) + 5)
@@ -1270,6 +1309,8 @@ function collectProjectData() {
             milestone: item.querySelector('.activity-milestone').checked,
             milestoneEmoji: item.querySelector('.milestone-character-input').value.trim() || '⭐',
             milestoneDate: item.querySelector('.milestone-date-input').value,
+            hasCustomLabel: item.querySelector('.activity-custom-label-toggle').checked,
+            customLabel: item.querySelector('.custom-label-input').value.trim(),
         });
     });
 
@@ -1376,6 +1417,7 @@ function restoreProjectData(data, autoGenerate = true) {
                 <input type="date" class="activity-custom-start" value="${escapeHtml(act.customStart || '')}">
             </div>
             ${buildMilestoneRowHTML(!!act.milestone, act.milestoneEmoji || '🏁', act.milestoneDate || '')}
+            ${buildCustomLabelRowHTML(!!act.hasCustomLabel, act.customLabel || '')}
         `;
         container.appendChild(item);
 
@@ -1383,6 +1425,7 @@ function restoreProjectData(data, autoGenerate = true) {
         item.querySelector('.activity-fte').addEventListener('input', () => updateFteHint(item));
         updateFteHint(item);
         attachMilestoneListeners(item);
+        attachCustomLabelListeners(item);
     });
 
     updateDependencyDropdowns();

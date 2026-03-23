@@ -1040,3 +1040,51 @@ body.dark .instructions li {
     border-color: var(--border-input-focus);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
+
+.custom-label-row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0;
+}
+
+.custom-label-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.75em;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-label-toggle-label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.custom-label-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 6px 9px;
+    border: 1px solid var(--border-input);
+    border-radius: 6px;
+    font-size: 0.95em;
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.3s;
+}
+
+.custom-label-input:focus {
+    outline: none;
+    border-color: var(--border-input-focus);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
