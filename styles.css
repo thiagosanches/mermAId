@@ -1088,3 +1088,28 @@ body.dark .instructions li {
     border-color: var(--border-input-focus);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
+
+.show-dates-row {
+    margin-top: 0;
+}
+
+.show-dates-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.75em;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+
+.show-dates-toggle-label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}

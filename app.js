@@ -412,13 +412,18 @@ function buildMilestoneRowHTML(isMilestone = false, character = '⭐', milestone
         </div>`;
 }
 
-function buildCustomLabelRowHTML(hasCustomLabel = false, customLabel = '') {
+function buildCustomLabelRowHTML(hasCustomLabel = false, customLabel = '', showDates = true) {
     return `
         <div class="form-group custom-label-row">
             <label class="custom-label-toggle-label">
                 <input type="checkbox" class="activity-custom-label-toggle"${hasCustomLabel ? ' checked' : ''}> Custom Label
             </label>
             <input type="text" class="custom-label-input" value="${customLabel}" placeholder="Enter custom label" ${hasCustomLabel ? '' : 'style="display:none;"'}>
+        </div>
+        <div class="form-group show-dates-row">
+            <label class="show-dates-toggle-label">
+                <input type="checkbox" class="activity-show-dates-toggle"${showDates ? ' checked' : ''}> Show Dates
+            </label>
         </div>`;
 }
 
@@ -453,9 +458,10 @@ function attachMilestoneListeners(item) {
 function attachCustomLabelListeners(item) {
     const checkbox = item.querySelector('.activity-custom-label-toggle');
     const labelInput = item.querySelector('.custom-label-input');
+    const showDatesCheckbox = item.querySelector('.activity-show-dates-toggle');
 
     // Safety check: ensure all elements exist
-    if (!checkbox || !labelInput) return;
+    if (!checkbox || !labelInput || !showDatesCheckbox) return;
 
     checkbox.addEventListener('change', () => {
         labelInput.style.display = checkbox.checked ? '' : 'none';
@@ -464,6 +470,11 @@ function attachCustomLabelListeners(item) {
     });
 
     labelInput.addEventListener('input', () => {
+        scheduleSave();
+        scheduleRender();
+    });
+
+    showDatesCheckbox.addEventListener('change', () => {
         scheduleSave();
         scheduleRender();
     });
@@ -589,9 +600,10 @@ function generateTimeline() {
         const milestoneDate = item.querySelector('.milestone-date-input').value;
         const hasCustomLabel = item.querySelector('.activity-custom-label-toggle').checked;
         const customLabel = item.querySelector('.custom-label-input').value.trim();
+        const showDates = item.querySelector('.activity-show-dates-toggle').checked;
 
         if (name && workingDays > 0) {
-            activities.push({ id, name, workingDays, fte, calendarDays, color, dependsOn: dependsOn || null, customStart: customStart || null, milestone, milestoneEmoji, milestoneDate, hasCustomLabel, customLabel, start: null, end: null });
+            activities.push({ id, name, workingDays, fte, calendarDays, color, dependsOn: dependsOn || null, customStart: customStart || null, milestone, milestoneEmoji, milestoneDate, hasCustomLabel, customLabel, showDates, start: null, end: null });
         }
     });
 
@@ -1205,7 +1217,7 @@ function renderGanttChart(projectName, projectStart, projectEnd, activities) {
         .attr('dominant-baseline', 'middle')
         .style('font-size', '10px').style('fill', d => getContrastColor(d.color))
         .style('pointer-events', 'none')
-        .text(d => `${d.start} → ${d.end}`);
+        .text(d => d.showDates ? `${d.start} → ${d.end}` : '');
 
     ganttChart = { activities, svg, xScale, yScale };
 }
@@ -1311,6 +1323,7 @@ function collectProjectData() {
             milestoneDate: item.querySelector('.milestone-date-input').value,
             hasCustomLabel: item.querySelector('.activity-custom-label-toggle').checked,
             customLabel: item.querySelector('.custom-label-input').value.trim(),
+            showDates: item.querySelector('.activity-show-dates-toggle').checked,
         });
     });
 
@@ -1417,7 +1430,7 @@ function restoreProjectData(data, autoGenerate = true) {
                 <input type="date" class="activity-custom-start" value="${escapeHtml(act.customStart || '')}">
             </div>
             ${buildMilestoneRowHTML(!!act.milestone, act.milestoneEmoji || '🏁', act.milestoneDate || '')}
-            ${buildCustomLabelRowHTML(!!act.hasCustomLabel, act.customLabel || '')}
+            ${buildCustomLabelRowHTML(!!act.hasCustomLabel, act.customLabel || '', act.showDates !== false)}
         `;
         container.appendChild(item);
 
