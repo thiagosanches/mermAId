@@ -976,6 +976,7 @@ body.dark .instructions li {
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
+    margin-bottom: 0;
 }
 
 .milestone-toggle-label {
@@ -999,6 +1000,13 @@ body.dark .instructions li {
     cursor: pointer;
 }
 
+.milestone-inputs-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 0;
+}
+
 .milestone-character-input {
     width: 50px;
     padding: 6px 9px;
@@ -1016,10 +1024,6 @@ body.dark .instructions li {
     outline: none;
     border-color: var(--border-input-focus);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
-}
-
-.milestone-date-row {
-    margin-top: 0;
 }
 
 .milestone-date-input {

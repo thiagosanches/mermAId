@@ -404,10 +404,9 @@ function buildMilestoneRowHTML(isMilestone = false, character = '⭐', milestone
             <label class="milestone-toggle-label">
                 <input type="checkbox" class="activity-milestone"${isMilestone ? ' checked' : ''}> Milestone
             </label>
-            <input type="text" class="milestone-character-input" value="${character}" maxlength="2" placeholder="⭐" ${isMilestone ? '' : 'style="display:none;"'}>
         </div>
-        <div class="form-group milestone-date-row" ${isMilestone ? '' : 'style="display:none;"'}>
-            <label>Milestone Date:</label>
+        <div class="form-group milestone-inputs-row" ${isMilestone ? '' : 'style="display:none;"'}>
+            <input type="text" class="milestone-character-input" value="${character}" maxlength="2" placeholder="⭐">
             <input type="date" class="milestone-date-input" value="${milestoneDate}">
         </div>`;
 }
@@ -431,15 +430,14 @@ function attachMilestoneListeners(item) {
     const checkbox = item.querySelector('.activity-milestone');
     const charInput = item.querySelector('.milestone-character-input');
     const dateInput = item.querySelector('.milestone-date-input');
-    const dateRow = item.querySelector('.milestone-date-row');
+    const inputsRow = item.querySelector('.milestone-inputs-row');
 
     // Safety check: ensure all elements exist
-    if (!checkbox || !charInput || !dateInput || !dateRow) return;
+    if (!checkbox || !charInput || !dateInput || !inputsRow) return;
 
     checkbox.addEventListener('change', () => {
         const isChecked = checkbox.checked;
-        charInput.style.display = isChecked ? '' : 'none';
-        dateRow.style.display = isChecked ? '' : 'none';
+        inputsRow.style.display = isChecked ? '' : 'none';
         scheduleSave();
         scheduleRender();
     });
