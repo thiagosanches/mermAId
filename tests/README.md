@@ -23,6 +23,7 @@ tests/
 ├── calculateEndDate.test.js  # Core end date calculation logic
 ├── segments.test.js          # Weekend segment splitting
 ├── fte.test.js              # FTE calculation tests
+├── weekNumbering.test.js     # Week numbering logic (W0 vs W1)
 ├── integration.test.js       # Full integration & dependency chain tests
 └── README.md                # This file
 ```
@@ -120,25 +121,35 @@ node --test tests/dateUtils.test.js
 
 **Purpose:** Enables visual rendering of activity bars with gaps for weekends/holidays
 
-### 6. FTE Calculations (fte.test.js)
-**Function tested:**
-- `calendarDaysFromFte(workingDays, fte)` - Converts working days to calendar days based on FTE
+### 7. Week Numbering Logic (weekNumbering.test.js)
+**Functions tested:**
+- `isFullWeekStart(projectStart)` - Determines if project starts on a full week (Sun/Mon)
+- `getWeekLabel(weekIndex, isFullWeekStart)` - Calculates week label (W0, W1, W2...)
 
-**Test scenarios:** 42 tests
-- Full-time (FTE = 1.0)
-- Part-time (FTE < 1.0): 0.5, 0.25, 0.6, 0.75, 0.2
-- Over-time (FTE > 1.0): 2.0, 3.0, 5.0
-- Ceiling behavior (always rounds up)
-- Edge cases (FTE = 0, negative, minimum 0.1)
-- Invalid inputs (undefined, null, NaN, empty string)
-- Real-world scenarios (consultants, part-time workers)
+**Test scenarios:** 23 tests
+- Full week start (Sunday or Monday) → First week labeled "W1"
+- Partial week start (Tuesday-Saturday) → First partial week labeled "W0"
+- Week sequence validation for all weekday starts
+- Full calendar mode vs compressed mode differences
+- Edge cases (year start, month boundaries)
 
-**Key business rules:**
-- Minimum FTE is 0.1
-- Result is always ceiling (never rounds down)
-- Invalid FTE defaults to 1.0
+**Key business rule:**
+```javascript
+// Full calendar mode (weekends shown):
+// - If project starts on Sunday (day 0) or Monday (day 1) → First week is "W1"
+// - If project starts on Tue-Sat (day 2-6) → First partial week is "W0"
 
-### 7. Integration Tests (integration.test.js)
+// Compressed mode (weekends hidden):
+// - If project starts on Monday → First week is "W1", "W2", "W3"...
+// - Otherwise → First week is "W0", "W1", "W2"...
+```
+
+**Examples:**
+- Monday start: W1, W2, W3, W4
+- Tuesday start: W0, W1, W2, W3
+- Sunday start: W1, W2, W3, W4
+
+### 8. Integration Tests (integration.test.js)
 **Functions tested:**
 - `calculateActivityDates(activities, projectStart)` - Calculates all activity dates with dependencies
 - `calculateProjectEndDate(activities)` - Finds project end with 7-day buffer
@@ -188,13 +199,18 @@ Holidays take precedence even if they fall on weekdays - they're treated as non-
 ### 7. Project End Buffer
 Project end date is calculated as the latest activity end + 7 calendar days.
 
+### 8. Week Numbering Rule (W0 vs W1)
+- **Full week start (Sun/Mon):** First week is labeled "W1"
+- **Partial week start (Tue-Sat):** First partial week is labeled "W0", then "W1", "W2"...
+- **Compressed mode:** Only Monday start gets "W1" first; all others start with "W0"
+
 ## Test Statistics
 
-- **Total test files:** 7
-- **Total test suites:** 48
-- **Total tests:** 200
+- **Total test files:** 8
+- **Total test suites:** 55
+- **Total tests:** 223
 - **Pass rate:** 100%
-- **Average run time:** ~680ms
+- **Average run time:** ~625ms
 
 ## Edge Cases Covered
 
@@ -254,7 +270,7 @@ Add to your CI/CD pipeline:
 1. Update the corresponding function in `tests/testUtils.js`
 2. Add new test cases to cover the changes
 3. Run tests to ensure no regressions
-4. All 200 tests should pass before merging
+4. All 223 tests should pass before merging
 
 ### Common pitfalls to avoid:
 
