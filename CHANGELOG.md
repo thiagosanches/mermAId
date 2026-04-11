@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-04-11
+
 ### Added
 - GitHub Pages deployment workflow with test requirement - only deploys when all unit tests pass
 - Automated deployment on push to master branch
+- CHANGELOG.md to track project changes
 
 ### Changed
 - Upgraded GitHub Actions to v6 for Node.js 24 support
